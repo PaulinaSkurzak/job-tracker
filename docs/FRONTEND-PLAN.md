@@ -42,7 +42,7 @@ All endpoints require login except `csrf` and `login`. JSON in and out.
 | `POST /api/auth/login/`, `POST /api/auth/logout/`, `GET /api/auth/me/` | Session login, logout, current user |
 | `GET, POST /api/companies/` | List (for autocomplete), create |
 | `GET, POST /api/applications/` and `GET, PATCH, DELETE /api/applications/{id}/` | CRUD. Filters: `?status=`, `?term=`, `?q=` (company or role). Detail includes status history and linked contacts. |
-| `POST /api/applications/{id}/move/` | `{status, position}` from drag and drop. Reuses today's move logic, so a `StatusChange` is still written by `Application.save()`. |
+| `POST /api/applications/{id}/move/` | `{status, ids}` from drag and drop: the target column and its cards' ids in their new order (one request fixes the whole column's order, so positions cannot drift). Reuses `services.move()`, so a `StatusChange` is still written by `Application.save()`. |
 | `GET, POST /api/contacts/` and `GET, PATCH, DELETE /api/contacts/{id}/` | CRUD. List includes last interaction and next follow-up (for the data table). |
 | `POST /api/contacts/{id}/interactions/` | Log an interaction |
 | `PATCH /api/interactions/{id}/` | Mark a follow-up done, or snooze it (move `follow_up_date`) |

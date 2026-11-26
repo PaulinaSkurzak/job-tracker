@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
 from django.db.models import Count, Max
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -50,13 +49,7 @@ def move(request, pk):
     except ValueError:
         return HttpResponseBadRequest("invalid ids")
 
-    with transaction.atomic():
-        if application.status != status:
-            application.status = status
-            application.save()  # goes through save() so the StatusChange row is written
-        for index, application_id in enumerate(ids):
-            # .update() skips save(), which is right here: only position changes, not status.
-            Application.objects.filter(pk=application_id, status=status).update(position=index)
+    services.move(application, status, ids)
     return HttpResponse(status=204)
 
 
@@ -187,10 +180,7 @@ class _ResumeSaveMixin:
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        if services.active_resume() is None:
-            services.activate(self.object)  # the first resume becomes the active one automatically
-        elif self.object.is_active:
-            services.rescore_all()  # its text may have changed, so stored scores are stale
+        services.after_resume_saved(self.object)
         return response
 
 

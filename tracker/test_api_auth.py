@@ -81,11 +81,13 @@ class LoginRequiredTests(TestCase):
 
     def test_every_other_api_endpoint_requires_login(self):
         client = APIClient()
-        names = [p.name for p in api_urls.urlpatterns if p.name and p.name not in self.PUBLIC]
-        self.assertTrue(names)
-        for name in names:
-            with self.subTest(endpoint=name):
-                self.assertEqual(client.get(reverse(name)).status_code, 403)
+        patterns = [p for p in api_urls.urlpatterns if p.name and p.name not in self.PUBLIC]
+        self.assertGreater(len(patterns), 10)
+        for pattern in patterns:
+            # Fill any URL parameters (like {pk}) with a dummy id; the login check runs before the lookup.
+            kwargs = {key: 1 for key in pattern.pattern.regex.groupindex}
+            with self.subTest(endpoint=pattern.name):
+                self.assertEqual(client.get(reverse(pattern.name, kwargs=kwargs)).status_code, 403)
 
     def test_schema_is_served_to_a_logged_in_user(self):
         user = get_user_model().objects.create_user("paulina", password=PASSWORD)

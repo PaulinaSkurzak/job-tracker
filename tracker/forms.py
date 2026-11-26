@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 
 from . import services
-from .models import Application, Company, Contact, Interaction, Resume
+from .models import Application, Contact, Interaction, Resume
 
 
 def _date_widget():
@@ -34,8 +34,7 @@ class ApplicationForm(forms.ModelForm):
         self.order_fields(["company_name"])  # show company first
 
     def save(self, commit=True):
-        name = self.cleaned_data["company_name"].strip()
-        self.instance.company, _ = Company.objects.get_or_create(name=name)
+        self.instance.company = services.company_named(self.cleaned_data["company_name"])
         # Score against the active resume whenever the description is saved or edited.
         self.instance.match_score = services.score_for(self.instance.job_description, services.active_resume())
         return super().save(commit)
@@ -66,7 +65,7 @@ class ContactForm(forms.ModelForm):
 
     def save(self, commit=True):
         name = self.cleaned_data["company_name"].strip()
-        self.instance.company = Company.objects.get_or_create(name=name)[0] if name else None
+        self.instance.company = services.company_named(name) if name else None
         return super().save(commit)  # with commit=True this also saves the many-to-many field
 
 

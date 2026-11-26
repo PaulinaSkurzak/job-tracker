@@ -155,4 +155,7 @@ SPECTACULAR_SETTINGS = {
     # The schema describes every endpoint, so it is behind login too.
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
     "SERVE_INCLUDE_SCHEMA": False,
+    # Application.status and StatusChange.to_status share one set of choices; give it a single clear
+    # name, which becomes the ApplicationStatus type in the frontend.
+    "ENUM_NAME_OVERRIDES": {"ApplicationStatus": "tracker.models.Application.Status"},
 }

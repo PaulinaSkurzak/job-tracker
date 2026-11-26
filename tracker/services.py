@@ -4,7 +4,12 @@ from django.db import transaction
 from django.db.models import Count, Q
 
 from . import matching
-from .models import Application, Resume, StatusChange
+from .models import Application, Company, Resume, StatusChange
+
+
+def company_named(name):
+    """Find the company with this name, or create it. Lets forms and the API take a plain name."""
+    return Company.objects.get_or_create(name=name.strip())[0]
 
 
 def active_resume():
@@ -39,6 +44,26 @@ def activate(resume):
     resume.is_active = True
     resume.save()
     rescore_all()
+
+
+def after_resume_saved(resume):
+    """Keep "one active resume" and the stored scores consistent after a resume is created or edited."""
+    if active_resume() is None:
+        activate(resume)  # the first resume becomes the active one automatically
+    elif resume.is_active:
+        rescore_all()  # its text may have changed, so stored scores are stale
+
+
+@transaction.atomic
+def move(application, status, ids):
+    """Apply a kanban drop: the card lands in `status`, and `ids` is that column's new top-to-bottom order."""
+    if application.status != status:
+        application.status = status
+        application.save()  # goes through save() so the StatusChange row is written
+    for index, application_id in enumerate(ids):
+        # .update() skips save(), which is right here: only position changes, not status. Filtering on
+        # status means ids from another column cannot be reordered by mistake.
+        Application.objects.filter(pk=application_id, status=status).update(position=index)
 
 
 # Each funnel stage lists every status that counts as "having reached" it. An application moved
