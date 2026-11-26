@@ -110,7 +110,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# "Today" on the dashboard must be today in Boston, not in UTC (they differ in the evening).
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 

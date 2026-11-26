@@ -1,0 +1,35 @@
+{% extends "tracker/base.html" %}
+{% block title %}Dashboard | Job Tracker{% endblock %}
+
+{% block content %}
+<div class="panel wide">
+  <h1>Dashboard <span class="muted">{{ today|date:"l, M j" }}</span></h1>
+
+  <h2>Overdue follow-ups ({{ overdue|length }})</h2>
+  {% for item in overdue %}
+    {% include "tracker/_followup_row.html" with item=item overdue=True %}
+  {% empty %}
+    <p class="muted">Nothing overdue.</p>
+  {% endfor %}
+
+  <h2>Follow-ups in the next {{ window }} days ({{ upcoming|length }})</h2>
+  {% for item in upcoming %}
+    {% include "tracker/_followup_row.html" with item=item overdue=False %}
+  {% empty %}
+    <p class="muted">Nothing coming up.</p>
+  {% endfor %}
+
+  <h2>Saved roles with a deadline in the next {{ window }} days ({{ deadlines|length }})</h2>
+  {% for application in deadlines %}
+    <div class="row">
+      <div>
+        <a href="{% url 'application_update' application.pk %}">{{ application.role_title }}</a>
+        at {{ application.company.name }}
+      </div>
+      <div class="muted">due {{ application.deadline|date:"M j" }}</div>
+    </div>
+  {% empty %}
+    <p class="muted">No deadlines coming up.</p>
+  {% endfor %}
+</div>
+{% endblock %}

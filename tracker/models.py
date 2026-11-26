@@ -122,6 +122,7 @@ class Interaction(models.Model):
     kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.OTHER)
     notes = models.TextField(blank=True)
     follow_up_date = models.DateField(null=True, blank=True)  # drives dashboard reminders
+    follow_up_done = models.BooleanField(default=False)  # lets a reminder leave the dashboard once handled
 
     class Meta:
         ordering = ["-date"]

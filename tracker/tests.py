@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from .models import Application, Company, Resume
+from .models import Application, Company, Contact, Interaction, Resume
 
 
 def make_application(**kwargs):
@@ -148,3 +151,119 @@ class ApplicationFormTests(LoggedInTestCase):
         app = make_application()
         self.client.post(reverse("application_delete", args=[app.pk]))
         self.assertFalse(Application.objects.exists())
+
+
+def make_contact(name="Alex Rivera", **kwargs):
+    return Contact.objects.create(name=name, **kwargs)
+
+
+def days_from_today(days):
+    return timezone.localdate() + timedelta(days=days)
+
+
+class ContactTests(LoggedInTestCase):
+    def test_contact_pages_require_login(self):
+        contact = make_contact()
+        anonymous = Client()
+        for name, args in [("contact_list", []), ("contact_detail", [contact.pk]), ("dashboard", [])]:
+            self.assertEqual(anonymous.get(reverse(name, args=args)).status_code, 302, name)
+
+    def test_create_contact_with_company_and_application(self):
+        app = make_application()
+        response = self.client.post(
+            reverse("contact_create"),
+            {"name": "Sam Lee", "company_name": "Deloitte", "applications": [app.pk]},
+        )
+        contact = Contact.objects.get()
+        self.assertRedirects(response, reverse("contact_detail", args=[contact.pk]))
+        self.assertEqual(contact.company.name, "Deloitte")
+        self.assertEqual(list(contact.applications.all()), [app])
+
+    def test_contact_company_is_optional(self):
+        self.client.post(reverse("contact_create"), {"name": "Sam Lee", "company_name": ""})
+        self.assertIsNone(Contact.objects.get().company)
+
+    def test_list_shows_interaction_count_and_last_contact(self):
+        contact = make_contact()
+        Interaction.objects.create(contact=contact, date=days_from_today(-9))
+        Interaction.objects.create(contact=contact, date=days_from_today(-2))
+        row = self.client.get(reverse("contact_list")).context["contacts"][0]
+        self.assertEqual((row.interaction_count, row.last_contacted), (2, days_from_today(-2)))
+
+    def test_log_interaction_attaches_to_the_contact_in_the_url(self):
+        contact = make_contact()
+        response = self.client.post(
+            reverse("interaction_create", args=[contact.pk]),
+            {"date": days_from_today(0), "kind": "coffee_chat", "notes": "Great chat"},
+        )
+        self.assertRedirects(response, reverse("contact_detail", args=[contact.pk]))
+        self.assertEqual(contact.interactions.get().kind, "coffee_chat")
+
+    def test_deleting_a_contact_deletes_its_interactions(self):
+        contact = make_contact()
+        Interaction.objects.create(contact=contact, date=days_from_today(0))
+        self.client.post(reverse("contact_delete", args=[contact.pk]))
+        self.assertFalse(Interaction.objects.exists())
+
+
+class DashboardTests(LoggedInTestCase):
+    def setUp(self):
+        super().setUp()
+        self.contact = make_contact()
+
+    def follow_up(self, days, done=False):
+        return Interaction.objects.create(
+            contact=self.contact, date=days_from_today(-3), follow_up_date=days_from_today(days), follow_up_done=done
+        )
+
+    def test_overdue_and_upcoming_are_separated(self):
+        overdue, upcoming = self.follow_up(-1), self.follow_up(5)
+        context = self.client.get(reverse("dashboard")).context
+        self.assertEqual(list(context["overdue"]), [overdue])
+        self.assertEqual(list(context["upcoming"]), [upcoming])
+
+    def test_follow_up_due_today_is_upcoming_not_overdue(self):
+        today = self.follow_up(0)
+        context = self.client.get(reverse("dashboard")).context
+        self.assertEqual((list(context["overdue"]), list(context["upcoming"])), ([], [today]))
+
+    def test_follow_ups_beyond_the_window_are_hidden(self):
+        self.follow_up(60)
+        self.assertEqual(list(self.client.get(reverse("dashboard")).context["upcoming"]), [])
+
+    def test_done_follow_ups_and_interactions_without_one_are_hidden(self):
+        self.follow_up(-1, done=True)
+        Interaction.objects.create(contact=self.contact, date=days_from_today(-1))  # no follow-up date
+        context = self.client.get(reverse("dashboard")).context
+        self.assertEqual((list(context["overdue"]), list(context["upcoming"])), ([], []))
+
+    def test_mark_done_removes_the_reminder(self):
+        item = self.follow_up(-1)
+        response = self.client.post(reverse("interaction_done", args=[item.pk]))
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertEqual(list(self.client.get(reverse("dashboard")).context["overdue"]), [])
+
+    def test_mark_done_ignores_a_next_url_on_another_site(self):
+        item = self.follow_up(-1)
+        response = self.client.post(
+            reverse("interaction_done", args=[item.pk]), {"next": "https://evil.example/phish"}
+        )
+        self.assertRedirects(response, reverse("dashboard"))
+
+    def test_mark_done_follows_a_next_url_on_this_site(self):
+        item = self.follow_up(-1)
+        target = reverse("contact_detail", args=[self.contact.pk])
+        response = self.client.post(reverse("interaction_done", args=[item.pk]), {"next": target})
+        self.assertRedirects(response, target)
+
+    def test_mark_done_needs_post(self):
+        item = self.follow_up(-1)
+        self.assertEqual(self.client.get(reverse("interaction_done", args=[item.pk])).status_code, 405)
+
+    def test_only_saved_applications_with_near_deadlines_are_listed(self):
+        make_application(deadline=days_from_today(3))                                        # shown
+        make_application(deadline=days_from_today(3), status=Application.Status.APPLIED)    # already applied
+        make_application(deadline=days_from_today(-3))                                       # already passed
+        make_application(deadline=days_from_today(90))                                       # too far away
+        shown = self.client.get(reverse("dashboard")).context["deadlines"]
+        self.assertEqual(len(shown), 1)

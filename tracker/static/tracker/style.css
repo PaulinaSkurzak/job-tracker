@@ -38,3 +38,13 @@ button.primary, button.danger-button { border: 0; border-radius: 6px; padding: 9
 button.primary { background: var(--accent); }
 button.danger-button { background: var(--danger); }
 a.danger { color: var(--danger); margin-left: auto; }
+
+/* dashboard, lists */
+.panel.wide { max-width: 860px; }
+.panel h2 { font-size: 15px; margin: 24px 0 8px; }
+.muted { color: var(--muted); font-weight: 400; }
+.small { font-size: 13px; font-weight: 400; margin-left: 10px; }
+.late { color: var(--danger); font-weight: 600; }
+.row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.row-right { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+select[multiple] { min-height: 120px; }

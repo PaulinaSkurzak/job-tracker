@@ -1,14 +1,21 @@
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.db.models import Count, Max
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, DeleteView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from .forms import ApplicationForm
-from .models import Application
+from .forms import ApplicationForm, ContactForm, InteractionForm
+from .models import Application, Contact, Interaction
+
+REMINDER_WINDOW_DAYS = 14
 
 
 @login_required
@@ -70,3 +77,113 @@ class ApplicationDelete(LoginRequiredMixin, DeleteView):
     model = Application
     template_name = "tracker/application_confirm_delete.html"
     success_url = reverse_lazy("board")
+
+
+# ---- Contacts and interactions -------------------------------------------------------------
+
+
+class ContactList(LoginRequiredMixin, ListView):
+    template_name = "tracker/contact_list.html"
+    context_object_name = "contacts"
+
+    def get_queryset(self):
+        # Annotate in the database so the list needs one query, not one per contact.
+        return (
+            Contact.objects.select_related("company")
+            .annotate(interaction_count=Count("interactions"), last_contacted=Max("interactions__date"))
+        )
+
+
+class ContactDetail(LoginRequiredMixin, DetailView):
+    model = Contact
+    template_name = "tracker/contact_detail.html"
+
+    def get_queryset(self):
+        return Contact.objects.select_related("company").prefetch_related("interactions", "applications__company")
+
+
+class ContactCreate(LoginRequiredMixin, CreateView):
+    model = Contact
+    form_class = ContactForm
+    template_name = "tracker/contact_form.html"
+
+    def get_success_url(self):
+        return reverse("contact_detail", args=[self.object.pk])
+
+
+class ContactUpdate(LoginRequiredMixin, UpdateView):
+    model = Contact
+    form_class = ContactForm
+    template_name = "tracker/contact_form.html"
+
+    def get_success_url(self):
+        return reverse("contact_detail", args=[self.object.pk])
+
+
+class ContactDelete(LoginRequiredMixin, DeleteView):
+    model = Contact
+    template_name = "tracker/contact_confirm_delete.html"
+    success_url = reverse_lazy("contact_list")
+
+
+class InteractionCreate(LoginRequiredMixin, CreateView):
+    model = Interaction
+    form_class = InteractionForm
+    template_name = "tracker/interaction_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.contact = get_object_or_404(Contact, pk=kwargs["contact_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(contact=self.contact, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.contact = self.contact  # the contact comes from the URL, not from the form
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("contact_detail", args=[self.contact.pk])
+
+
+@login_required
+@require_POST
+def interaction_done(request, pk):
+    interaction = get_object_or_404(Interaction, pk=pk)
+    interaction.follow_up_done = True
+    interaction.save(update_fields=["follow_up_done"])
+    next_url = request.POST.get("next", "")
+    # Only follow "next" if it points back at this site (prevents open-redirect abuse).
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect("dashboard")
+
+
+# ---- Dashboard -----------------------------------------------------------------------------
+
+
+@login_required
+def dashboard(request):
+    today = timezone.localdate()
+    soon = today + timedelta(days=REMINDER_WINDOW_DAYS)
+
+    pending = Interaction.objects.filter(follow_up_date__isnull=False, follow_up_done=False).select_related(
+        "contact__company"
+    )
+    overdue = pending.filter(follow_up_date__lt=today).order_by("follow_up_date")
+    upcoming = pending.filter(follow_up_date__gte=today, follow_up_date__lte=soon).order_by("follow_up_date")
+
+    # Roles still in "Saved" are the ones a deadline can still be missed for.
+    deadlines = (
+        Application.objects.filter(status=Application.Status.SAVED, deadline__gte=today, deadline__lte=soon)
+        .select_related("company")
+        .order_by("deadline")
+    )
+    context = {
+        "overdue": overdue,
+        "upcoming": upcoming,
+        "deadlines": deadlines,
+        "window": REMINDER_WINDOW_DAYS,
+        "today": today,
+    }
+    return render(request, "tracker/dashboard.html", context)

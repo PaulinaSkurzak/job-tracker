@@ -13,6 +13,8 @@
     {% if user.is_authenticated %}
       <nav>
         <a href="{% url 'board' %}">Board</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'contact_list' %}">Contacts</a>
         <a href="{% url 'application_create' %}">+ New application</a>
         <a href="{% url 'admin:index' %}">Admin</a>
         <form method="post" action="{% url 'logout' %}" class="inline">
