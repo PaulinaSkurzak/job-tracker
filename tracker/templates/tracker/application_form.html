@@ -2,6 +2,31 @@
 {% block title %}{% if object %}Edit{% else %}New{% endif %} application | Job Tracker{% endblock %}
 
 {% block content %}
+{% if object %}
+<div class="panel match">
+  <h2>Resume match
+    {% if object.match_score is not None %}<span class="score">{{ object.match_score }}%</span>{% endif %}
+  </h2>
+  {% if not has_active_resume %}
+    <p class="muted">No active resume yet. <a href="{% url 'resume_create' %}">Add your resume</a> to see how well it matches this role.</p>
+  {% elif not object.job_description.strip %}
+    <p class="muted">Paste the job description below and save to see the match.</p>
+  {% elif match.score is None %}
+    <p class="muted">No known skills were found in this description, so there is nothing to score. The skills list is in <code>tracker/skills.py</code>.</p>
+  {% else %}
+    <p class="muted">Your active resume mentions {{ match.matched|length }} of the {{ match.total }} skills in this posting.</p>
+    {% if match.missing %}
+      <p><strong>Missing from your resume:</strong></p>
+      <p class="tags">{% for skill in match.missing %}<span class="tag miss">{{ skill }}</span>{% endfor %}</p>
+    {% endif %}
+    {% if match.matched %}
+      <p><strong>Matched:</strong></p>
+      <p class="tags">{% for skill in match.matched %}<span class="tag hit">{{ skill }}</span>{% endfor %}</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="panel">
   <h1>{% if object %}Edit application{% else %}New application{% endif %}</h1>
   <form method="post">

@@ -12,8 +12,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from .forms import ApplicationForm, ContactForm, InteractionForm
-from .models import Application, Contact, Interaction
+from . import matching, services
+from .forms import ApplicationForm, ContactForm, InteractionForm, ResumeForm
+from .models import Application, Contact, Interaction, Resume
 
 REMINDER_WINDOW_DAYS = 14
 
@@ -71,6 +72,15 @@ class ApplicationUpdate(LoginRequiredMixin, UpdateView):
     form_class = ApplicationForm
     template_name = "tracker/application_form.html"
     success_url = reverse_lazy("board")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        resume = services.active_resume()
+        context["has_active_resume"] = resume is not None
+        # Computed live from the saved description so the keyword lists are always current.
+        if resume and self.object.job_description.strip():
+            context["match"] = matching.match(self.object.job_description, resume.text)
+        return context
 
 
 class ApplicationDelete(LoginRequiredMixin, DeleteView):
@@ -157,6 +167,46 @@ def interaction_done(request, pk):
     if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         return redirect(next_url)
     return redirect("dashboard")
+
+
+# ---- Resumes -------------------------------------------------------------------------------
+
+
+class ResumeList(LoginRequiredMixin, ListView):
+    model = Resume
+    template_name = "tracker/resume_list.html"
+    context_object_name = "resumes"
+    ordering = ["-is_active", "-created_at"]
+
+
+class _ResumeSaveMixin:
+    model = Resume
+    form_class = ResumeForm
+    template_name = "tracker/resume_form.html"
+    success_url = reverse_lazy("resume_list")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if services.active_resume() is None:
+            services.activate(self.object)  # the first resume becomes the active one automatically
+        elif self.object.is_active:
+            services.rescore_all()  # its text may have changed, so stored scores are stale
+        return response
+
+
+class ResumeCreate(LoginRequiredMixin, _ResumeSaveMixin, CreateView):
+    pass
+
+
+class ResumeUpdate(LoginRequiredMixin, _ResumeSaveMixin, UpdateView):
+    pass
+
+
+@login_required
+@require_POST
+def resume_activate(request, pk):
+    services.activate(get_object_or_404(Resume, pk=pk))
+    return redirect("resume_list")
 
 
 # ---- Dashboard -----------------------------------------------------------------------------

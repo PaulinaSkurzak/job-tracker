@@ -48,3 +48,14 @@ a.danger { color: var(--danger); margin-left: auto; }
 .row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .row-right { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 select[multiple] { min-height: 120px; }
+
+/* resume match */
+.panel.match { margin-bottom: 16px; }
+.score { font-size: 14px; background: var(--accent); color: #fff; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: #eef0f4; }
+.tag.hit { background: #dcf5e4; color: #14532d; }
+.tag.miss { background: #fde8e6; color: #7a1d14; }
+.panel.match h2 { margin-top: 0; }
+.brand, .topbar nav a, button.link { white-space: nowrap; }
+.topbar { flex-wrap: wrap; }

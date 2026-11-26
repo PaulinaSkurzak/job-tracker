@@ -1,0 +1,16 @@
+{% extends "tracker/base.html" %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} resume | Job Tracker{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <h1>{% if object %}Edit resume{% else %}New resume{% endif %}</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_div }}
+    <div class="actions">
+      <button type="submit" class="primary">Save</button>
+      <a href="{% url 'resume_list' %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

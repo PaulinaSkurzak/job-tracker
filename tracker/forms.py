@@ -1,7 +1,8 @@
 from django import forms
 from django.utils import timezone
 
-from .models import Application, Company, Contact, Interaction
+from . import services
+from .models import Application, Company, Contact, Interaction, Resume
 
 
 def _date_widget():
@@ -35,7 +36,16 @@ class ApplicationForm(forms.ModelForm):
     def save(self, commit=True):
         name = self.cleaned_data["company_name"].strip()
         self.instance.company, _ = Company.objects.get_or_create(name=name)
+        # Score against the active resume whenever the description is saved or edited.
+        self.instance.match_score = services.score_for(self.instance.job_description, services.active_resume())
         return super().save(commit)
+
+
+class ResumeForm(forms.ModelForm):
+    class Meta:
+        model = Resume
+        fields = ["name", "text"]
+        widgets = {"text": forms.Textarea(attrs={"rows": 18})}
 
 
 class ContactForm(forms.ModelForm):

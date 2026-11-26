@@ -14,6 +14,7 @@
             <div class="card-company">{{ application.company.name }}</div>
             {% if application.deadline %}<div class="card-meta">Due {{ application.deadline|date:"M j" }}</div>{% endif %}
             {% if application.term %}<div class="card-meta">{{ application.term }}</div>{% endif %}
+            {% if application.match_score is not None %}<div class="card-meta">Resume match {{ application.match_score }}%</div>{% endif %}
           </article>
         {% endfor %}
       </div>

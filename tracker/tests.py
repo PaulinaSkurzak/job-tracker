@@ -267,3 +267,101 @@ class DashboardTests(LoggedInTestCase):
         make_application(deadline=days_from_today(90))                                       # too far away
         shown = self.client.get(reverse("dashboard")).context["deadlines"]
         self.assertEqual(len(shown), 1)
+
+
+class ResumeMatchIntegrationTests(LoggedInTestCase):
+    JOB = "We need Python, SQL, Docker and AWS."
+
+    def make_resume(self, text="Python and SQL", **kwargs):
+        return Resume.objects.create(name="Main", text=text, **kwargs)
+
+    def post_application(self, description=None, **extra):
+        data = {
+            "company_name": "Acme Health", "role_title": "Data Co-op", "status": "saved",
+            "job_description": self.JOB if description is None else description,
+        }
+        data.update(extra)
+        return self.client.post(reverse("application_create"), data)
+
+    def test_resume_pages_require_login(self):
+        resume = self.make_resume()
+        anonymous = Client()
+        self.assertEqual(anonymous.get(reverse("resume_list")).status_code, 302)
+        self.assertEqual(anonymous.post(reverse("resume_activate", args=[resume.pk])).status_code, 302)
+
+    def test_first_resume_becomes_active_automatically(self):
+        self.client.post(reverse("resume_create"), {"name": "Main", "text": "Python"})
+        self.assertTrue(Resume.objects.get().is_active)
+
+    def test_second_resume_does_not_take_over(self):
+        self.make_resume(is_active=True)
+        self.client.post(reverse("resume_create"), {"name": "Other", "text": "Java"})
+        self.assertEqual(Resume.objects.get(is_active=True).name, "Main")
+
+    def test_saving_an_application_stores_the_score(self):
+        self.make_resume(is_active=True)
+        self.post_application()
+        self.assertEqual(Application.objects.get().match_score, 50)
+
+    def test_no_score_without_an_active_resume(self):
+        self.post_application()
+        self.assertIsNone(Application.objects.get().match_score)
+
+    def test_no_score_without_a_job_description(self):
+        self.make_resume(is_active=True)
+        self.post_application(description="")
+        self.assertIsNone(Application.objects.get().match_score)
+
+    def test_editing_the_description_updates_the_score(self):
+        self.make_resume(is_active=True)
+        self.post_application()
+        app = Application.objects.get()
+        self.client.post(
+            reverse("application_update", args=[app.pk]),
+            {"company_name": "Acme Health", "role_title": "Data Co-op", "status": "saved", "job_description": "Python"},
+        )
+        app.refresh_from_db()
+        self.assertEqual(app.match_score, 100)
+
+    def test_activating_another_resume_rescores_everything(self):
+        first = self.make_resume(text="Python and SQL", is_active=True)
+        second = Resume.objects.create(name="Cloud", text="Docker and AWS")
+        self.post_application()
+        self.client.post(reverse("resume_activate", args=[second.pk]))
+        self.assertEqual(Application.objects.get().match_score, 50)  # Docker and AWS: still 2 of 4
+        self.client.post(reverse("resume_activate", args=[first.pk]))
+        self.assertEqual(Resume.objects.get(is_active=True), first)
+        self.assertEqual(Resume.objects.filter(is_active=True).count(), 1)
+
+    def test_editing_the_active_resume_rescores_applications(self):
+        resume = self.make_resume(text="Python", is_active=True)
+        self.post_application()
+        self.assertEqual(Application.objects.get().match_score, 25)
+        self.client.post(reverse("resume_update", args=[resume.pk]), {"name": "Main", "text": self.JOB})
+        self.assertEqual(Application.objects.get().match_score, 100)
+
+    def test_rescoring_does_not_write_status_history(self):
+        self.make_resume(is_active=True)
+        self.post_application()
+        app = Application.objects.get()
+        self.client.post(reverse("resume_activate", args=[Resume.objects.get().pk]))
+        self.assertEqual(app.status_changes.count(), 1)
+
+    def test_edit_page_lists_matched_and_missing_skills(self):
+        self.make_resume(is_active=True)
+        self.post_application()
+        app = Application.objects.get()
+        response = self.client.get(reverse("application_update", args=[app.pk]))
+        self.assertEqual(response.context["match"].missing, ["AWS", "Docker"])
+        self.assertContains(response, "2 of the 4 skills")
+
+    def test_edit_page_explains_when_there_is_no_resume(self):
+        self.post_application()
+        app = Application.objects.get()
+        response = self.client.get(reverse("application_update", args=[app.pk]))
+        self.assertContains(response, "No active resume yet")
+
+    def test_board_card_shows_the_score(self):
+        self.make_resume(is_active=True)
+        self.post_application()
+        self.assertContains(self.client.get(reverse("board")), "Resume match 50%")
