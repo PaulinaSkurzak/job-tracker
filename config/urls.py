@@ -19,6 +19,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('tracker.api.urls')),  # JSON API for the Next.js frontend
     path('accounts/', include('django.contrib.auth.urls')),  # login, logout, password change
     path('', include('tracker.urls')),
 ]

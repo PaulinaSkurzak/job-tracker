@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'drf_spectacular',
     'tracker',
 ]
 
@@ -133,3 +135,24 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# REST API (used by the Next.js frontend in frontend/).
+REST_FRAMEWORK = {
+    # The frontend is served from the same origin as the API (nginx routes /api/ to Django),
+    # so Django's normal session cookie authenticates API calls. SessionAuthentication also
+    # enforces CSRF on every write from a logged-in user.
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    # Secure by default: every endpoint needs a logged-in user unless it explicitly opts out.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Job Tracker API",
+    "DESCRIPTION": "JSON API behind the Job Tracker frontend.",
+    "VERSION": "1.0.0",
+    # The schema describes every endpoint, so it is behind login too.
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    "SERVE_INCLUDE_SCHEMA": False,
+}

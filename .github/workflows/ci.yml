@@ -54,6 +54,9 @@ jobs:
       - name: Fail if a model change is missing its migration
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Validate the OpenAPI schema (the frontend's types are generated from it)
+        run: python manage.py spectacular --validate --fail-on-warn --file /tmp/schema.yml
+
       - name: Run tests
         run: python manage.py test
 
