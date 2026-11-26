@@ -365,3 +365,65 @@ class ResumeMatchIntegrationTests(LoggedInTestCase):
         self.make_resume(is_active=True)
         self.post_application()
         self.assertContains(self.client.get(reverse("board")), "Resume match 50%")
+
+
+class FunnelTests(TestCase):
+    def counts(self):
+        from . import services
+        return [(row["label"], row["count"]) for row in services.funnel()]
+
+    def move(self, app, *statuses):
+        for status in statuses:
+            app.status = status
+            app.save()
+
+    def test_empty_funnel_is_all_zero(self):
+        from . import services
+        self.assertEqual(self.counts(), [("Applied", 0), ("Screen / OA", 0), ("Interview", 0), ("Offer", 0)])
+        self.assertTrue(all(row["percent"] == 0 for row in services.funnel()))
+
+    def test_saved_applications_do_not_count_as_applied(self):
+        make_application()
+        self.assertEqual(self.counts()[0], ("Applied", 0))
+
+    def test_each_stage_counts_applications_that_reached_it(self):
+        self.move(make_application(), "applied")
+        self.move(make_application(), "applied", "screen")
+        self.move(make_application(), "applied", "screen", "interview")
+        self.assertEqual(self.counts(), [("Applied", 3), ("Screen / OA", 2), ("Interview", 1), ("Offer", 0)])
+
+    def test_rejected_after_interview_still_counts_as_reaching_interview(self):
+        self.move(make_application(), "applied", "screen", "interview", "rejected")
+        self.assertEqual(self.counts()[2], ("Interview", 1))
+
+    def test_skipping_stages_counts_for_every_earlier_stage(self):
+        self.move(make_application(), "interview")  # dragged straight from Saved to Interview
+        self.assertEqual(self.counts(), [("Applied", 1), ("Screen / OA", 1), ("Interview", 1), ("Offer", 0)])
+
+    def test_moving_back_and_forth_counts_an_application_once(self):
+        self.move(make_application(), "applied", "saved", "applied")
+        self.assertEqual(self.counts()[0], ("Applied", 1))
+
+    def test_rejected_without_applying_is_not_counted(self):
+        self.move(make_application(), "rejected")
+        self.assertEqual(self.counts()[0], ("Applied", 0))
+
+    def test_percentages_are_relative_to_applied(self):
+        from . import services
+        self.move(make_application(), "applied", "screen")
+        self.move(make_application(), "applied")
+        percents = [row["percent"] for row in services.funnel()]
+        self.assertEqual(percents, [100, 50, 0, 0])
+
+
+class DashboardFunnelViewTests(LoggedInTestCase):
+    def test_dashboard_shows_a_hint_before_anything_is_applied(self):
+        self.assertContains(self.client.get(reverse("dashboard")), "funnel will start filling in")
+
+    def test_dashboard_shows_the_funnel_once_there_is_data(self):
+        app = make_application()
+        app.status = "applied"
+        app.save()
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "funnel-bar")
+        self.assertContains(response, "1 application tracked")

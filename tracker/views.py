@@ -235,5 +235,7 @@ def dashboard(request):
         "deadlines": deadlines,
         "window": REMINDER_WINDOW_DAYS,
         "today": today,
+        "funnel": services.funnel(),
+        "total_applications": Application.objects.count(),
     }
     return render(request, "tracker/dashboard.html", context)

@@ -5,6 +5,20 @@
 <div class="panel wide">
   <h1>Dashboard <span class="muted">{{ today|date:"l, M j" }}</span></h1>
 
+  <h2>Pipeline <span class="muted">({{ total_applications }} application{{ total_applications|pluralize }} tracked)</span></h2>
+  {% if funnel.0.count %}
+    {% for stage in funnel %}
+      <div class="funnel-row">
+        <div class="funnel-label">{{ stage.label }}</div>
+        <div class="funnel-track"><div class="funnel-bar" style="width: {{ stage.percent }}%"></div></div>
+        <div class="funnel-count">{{ stage.count }} <span class="muted">({{ stage.percent }}%)</span></div>
+      </div>
+    {% endfor %}
+    <p class="muted">Share of applications that ever reached each stage, out of those you applied to.</p>
+  {% else %}
+    <p class="muted">Move a card to Applied on the board and the funnel will start filling in.</p>
+  {% endif %}
+
   <h2>Overdue follow-ups ({{ overdue|length }})</h2>
   {% for item in overdue %}
     {% include "tracker/_followup_row.html" with item=item overdue=True %}

@@ -59,3 +59,9 @@ select[multiple] { min-height: 120px; }
 .panel.match h2 { margin-top: 0; }
 .brand, .topbar nav a, button.link { white-space: nowrap; }
 .topbar { flex-wrap: wrap; }
+
+/* funnel */
+.funnel-row { display: grid; grid-template-columns: 110px 1fr 90px; align-items: center; gap: 12px; margin-bottom: 8px; }
+.funnel-track { background: #e9ecf1; border-radius: 6px; height: 14px; overflow: hidden; }
+.funnel-bar { background: var(--accent); height: 100%; min-width: 2px; }
+.funnel-count { text-align: right; }
