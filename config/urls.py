@@ -15,20 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.db import connection
-from django.http import HttpResponse
-from django.urls import path
-
-
-def hello(request):
-    # Temporary page that proves the whole chain works: nginx -> Django -> Postgres.
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT version()")
-        db_version = cursor.fetchone()[0]
-    return HttpResponse(f"Job Tracker is running. Database: {db_version}")
-
+from django.urls import include, path
 
 urlpatterns = [
-    path('', hello),
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),  # login, logout, password change
+    path('', include('tracker.urls')),
 ]

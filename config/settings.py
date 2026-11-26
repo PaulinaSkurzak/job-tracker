@@ -120,6 +120,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'board'
+LOGOUT_REDIRECT_URL = 'login'
+
 STATIC_URL = 'static/'
 # collectstatic gathers every app's static files here; nginx serves this folder.
 STATIC_ROOT = BASE_DIR / 'staticfiles'

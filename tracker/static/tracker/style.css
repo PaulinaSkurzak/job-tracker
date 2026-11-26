@@ -1,0 +1,40 @@
+:root { --bg: #f4f5f7; --surface: #fff; --text: #1d2430; --muted: #657083; --line: #dde1e8; --accent: #2563eb; --danger: #b42318; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar { display: flex; align-items: center; gap: 24px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; color: var(--text); }
+.topbar nav { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+form.inline { display: inline; margin: 0; }
+button.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
+
+main { padding: 20px; }
+
+/* kanban */
+.board { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px; }
+.column { flex: 0 0 240px; background: #e9ecf1; border-radius: 10px; padding: 10px; }
+.column h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 2px 4px 10px; }
+.count { font-weight: 400; margin-left: 4px; }
+.column-cards { min-height: 60px; }  /* keeps an empty column a valid drop target */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: grab; }
+.card-title { font-weight: 600; color: var(--text); }
+.card-company { color: var(--muted); }
+.card-meta { font-size: 12px; color: var(--muted); }
+.sortable-ghost { opacity: .4; }
+
+/* forms and panels */
+.panel { max-width: 640px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
+.panel.narrow { max-width: 380px; }
+.panel h1 { margin-top: 0; font-size: 20px; }
+.panel form > div > div, .panel form div:has(> label) { margin-bottom: 14px; }
+label { display: block; font-weight: 600; margin-bottom: 4px; }
+input[type=text], input[type=url], input[type=password], input[type=date], select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.errorlist { color: var(--danger); list-style: none; padding: 0; margin: 4px 0; }
+.helptext { color: var(--muted); font-size: 13px; }
+.actions { display: flex; align-items: center; gap: 16px; margin-top: 18px; }
+button.primary, button.danger-button { border: 0; border-radius: 6px; padding: 9px 18px; font: inherit; color: #fff; cursor: pointer; }
+button.primary { background: var(--accent); }
+button.danger-button { background: var(--danger); }
+a.danger { color: var(--danger); margin-left: auto; }
