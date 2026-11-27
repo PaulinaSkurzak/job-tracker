@@ -108,6 +108,24 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 The API is documented at http://localhost:8080/api/docs/ (after logging in).
 
+## Backups
+
+Your data lives in a Docker volume on your machine. `docker compose down -v` or resetting Docker Desktop deletes it,
+so back it up:
+
+```bash
+./scripts/backup.sh                                       # saves backups/jobtracker-<date>-<time>.dump, keeps the newest 14
+./scripts/restore.sh backups/jobtracker-<date>-<time>.dump   # asks first, and takes a safety backup before restoring
+```
+
+Backups are compressed `pg_dump` files, checked to be readable right after they are written. `backups/` is gitignored
+because it holds your personal data. To back up automatically every evening at 9pm while Docker is running, add this
+with `crontab -e` (use the full path to this folder):
+
+```
+0 21 * * * cd /path/to/job-tracker && ./scripts/backup.sh >> backups/backup.log 2>&1
+```
+
 ## Tests and CI
 
 ```bash
@@ -135,6 +153,7 @@ tracker/
   matching.py, skills.py  resume matcher and its vocabulary
   api/                  serializers, views, auth and URLs for the REST API
   management/commands/  seed_demo
+scripts/                backup.sh and restore.sh for the database
 frontend/
   src/app/              pages: (app)/ for logged-in pages, login/
   src/components/       board, dashboard, contacts and application components; ui/ is shadcn/ui
