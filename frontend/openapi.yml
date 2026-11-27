@@ -1,0 +1,1723 @@
+openapi: 3.0.3
+info:
+  title: Job Tracker API
+  version: 1.0.0
+  description: JSON API behind the Job Tracker frontend.
+paths:
+  /api/applications/:
+    get:
+      operationId: applications_list
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Search company name or role title
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - applied
+          - interview
+          - offer
+          - rejected
+          - saved
+          - screen
+          - withdrawn
+        description: Only this status
+      - in: query
+        name: term
+        schema:
+          type: string
+        description: Exact term, e.g. Summer 2027
+      tags:
+      - applications
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+          description: ''
+    post:
+      operationId: applications_create
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+  /api/applications/{id}/:
+    get:
+      operationId: applications_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this application.
+        required: true
+      tags:
+      - applications
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+    put:
+      operationId: applications_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this application.
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+    patch:
+      operationId: applications_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this application.
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedApplicationDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedApplicationDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedApplicationDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+    delete:
+      operationId: applications_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this application.
+        required: true
+      tags:
+      - applications
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/applications/{id}/move/:
+    post:
+      operationId: applications_move_create
+      description: 'Drag and drop: the card lands in `status`; `ids` is that column''s
+        new order.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this application.
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Move'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Move'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Move'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+  /api/auth/csrf/:
+    get:
+      operationId: auth_csrf_retrieve
+      description: Sets the csrftoken cookie. Safe to call when logged out.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: Lets the frontend ask "am I logged in, and as whom?" on page load.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/companies/:
+    get:
+      operationId: companies_list
+      description: 'List (for autocomplete) and create. No delete: companies are protected
+        while applications use them.'
+      tags:
+      - companies
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Company'
+          description: ''
+    post:
+      operationId: companies_create
+      description: 'List (for autocomplete) and create. No delete: companies are protected
+        while applications use them.'
+      tags:
+      - companies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Company'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Company'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Company'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+          description: ''
+  /api/contacts/:
+    get:
+      operationId: contacts_list
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Search name or company
+      tags:
+      - contacts
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+          description: ''
+    post:
+      operationId: contacts_create
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+          description: ''
+  /api/contacts/{id}/:
+    get:
+      operationId: contacts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this contact.
+        required: true
+      tags:
+      - contacts
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+          description: ''
+    put:
+      operationId: contacts_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this contact.
+        required: true
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+          description: ''
+    patch:
+      operationId: contacts_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this contact.
+        required: true
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedContactDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedContactDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedContactDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDetail'
+          description: ''
+    delete:
+      operationId: contacts_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this contact.
+        required: true
+      tags:
+      - contacts
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/contacts/{id}/interactions/:
+    post:
+      operationId: contacts_interactions_create
+      description: Log an interaction with this contact.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this contact.
+        required: true
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+          description: ''
+  /api/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      description: Everything the dashboard shows, in one request.
+      tags:
+      - dashboard
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+          description: ''
+  /api/interactions/{id}/:
+    get:
+      operationId: interactions_retrieve
+      description: 'Edit an interaction: mark its follow-up done, or snooze it by
+        moving follow_up_date.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this interaction.
+        required: true
+      tags:
+      - interactions
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+          description: ''
+    put:
+      operationId: interactions_update
+      description: 'Edit an interaction: mark its follow-up done, or snooze it by
+        moving follow_up_date.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this interaction.
+        required: true
+      tags:
+      - interactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Interaction'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+          description: ''
+    patch:
+      operationId: interactions_partial_update
+      description: 'Edit an interaction: mark its follow-up done, or snooze it by
+        moving follow_up_date.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this interaction.
+        required: true
+      tags:
+      - interactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInteraction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInteraction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInteraction'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+          description: ''
+    delete:
+      operationId: interactions_destroy
+      description: 'Edit an interaction: mark its follow-up done, or snooze it by
+        moving follow_up_date.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this interaction.
+        required: true
+      tags:
+      - interactions
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/match/:
+    post:
+      operationId: match_create
+      description: Score a job description without saving anything. Powers live scoring
+        as you type.
+      tags:
+      - match
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+          description: ''
+  /api/resumes/:
+    get:
+      operationId: resumes_list
+      tags:
+      - resumes
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resume'
+          description: ''
+    post:
+      operationId: resumes_create
+      tags:
+      - resumes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resume'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Resume'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Resume'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+  /api/resumes/{id}/:
+    get:
+      operationId: resumes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this resume.
+        required: true
+      tags:
+      - resumes
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+    put:
+      operationId: resumes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this resume.
+        required: true
+      tags:
+      - resumes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resume'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Resume'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Resume'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+    patch:
+      operationId: resumes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this resume.
+        required: true
+      tags:
+      - resumes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedResume'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedResume'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedResume'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+    delete:
+      operationId: resumes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this resume.
+        required: true
+      tags:
+      - resumes
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/resumes/{id}/activate/:
+    post:
+      operationId: resumes_activate_create
+      description: Make this the active resume and rescore every application against
+        it.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this resume.
+        required: true
+      tags:
+      - resumes
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+components:
+  schemas:
+    Application:
+      type: object
+      description: Used for the board list. Leaves out the job description, which
+        can be long, to keep it small.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role_title:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+        job_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        status_display:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        term:
+          type: string
+          description: e.g. Summer 2027
+          maxLength: 50
+        coop_months:
+          nullable: true
+          minimum: 0
+          maximum: 32767
+          oneOf:
+          - $ref: '#/components/schemas/CoopMonthsEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        date_applied:
+          type: string
+          format: date
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: 0-100, from resume match
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company
+      - created_at
+      - id
+      - match_score
+      - position
+      - role_title
+      - status_display
+      - updated_at
+    ApplicationDetail:
+      type: object
+      description: Used for the board list. Leaves out the job description, which
+        can be long, to keep it small.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role_title:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+        job_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        status_display:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        term:
+          type: string
+          description: e.g. Summer 2027
+          maxLength: 50
+        coop_months:
+          nullable: true
+          minimum: 0
+          maximum: 32767
+          oneOf:
+          - $ref: '#/components/schemas/CoopMonthsEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        date_applied:
+          type: string
+          format: date
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: 0-100, from resume match
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        job_description:
+          type: string
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusChange'
+          readOnly: true
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactBrief'
+          readOnly: true
+      required:
+      - company
+      - contacts
+      - created_at
+      - id
+      - match_score
+      - position
+      - role_title
+      - status_display
+      - status_history
+      - updated_at
+    ApplicationStatus:
+      enum:
+      - saved
+      - applied
+      - screen
+      - interview
+      - offer
+      - rejected
+      - withdrawn
+      type: string
+      description: |-
+        * `saved` - Saved
+        * `applied` - Applied
+        * `screen` - Screen / OA
+        * `interview` - Interview
+        * `offer` - Offer
+        * `rejected` - Rejected
+        * `withdrawn` - Withdrawn
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        notes:
+          type: string
+      required:
+      - id
+      - name
+    CompanyBrief:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+      required:
+      - id
+      - name
+    Contact:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role:
+          type: string
+          maxLength: 200
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        linkedin_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        notes:
+          type: string
+        applications:
+          type: array
+          items:
+            type: integer
+        interaction_count:
+          type: integer
+          readOnly: true
+          default: 0
+        last_contacted:
+          type: string
+          format: date
+          readOnly: true
+        next_follow_up:
+          type: string
+          format: date
+          readOnly: true
+      required:
+      - company
+      - id
+      - interaction_count
+      - last_contacted
+      - name
+      - next_follow_up
+    ContactBrief:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+      required:
+      - id
+      - name
+    ContactDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role:
+          type: string
+          maxLength: 200
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        linkedin_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        notes:
+          type: string
+        applications:
+          type: array
+          items:
+            type: integer
+        interaction_count:
+          type: integer
+          readOnly: true
+          default: 0
+        last_contacted:
+          type: string
+          format: date
+          readOnly: true
+        next_follow_up:
+          type: string
+          format: date
+          readOnly: true
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+          readOnly: true
+      required:
+      - company
+      - id
+      - interaction_count
+      - interactions
+      - last_contacted
+      - name
+      - next_follow_up
+    CoopMonthsEnum:
+      enum:
+      - 4
+      - 6
+      - 8
+      type: integer
+      description: |-
+        * `4` - 4 months
+        * `6` - 6 months
+        * `8` - 8 months
+    Dashboard:
+      type: object
+      properties:
+        today:
+          type: string
+          format: date
+        stats:
+          $ref: '#/components/schemas/DashboardStats'
+        funnel:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunnelStage'
+        weekly:
+          type: array
+          items:
+            $ref: '#/components/schemas/Week'
+        follow_ups:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowUp'
+        deadlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deadline'
+        gone_quiet:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuietApplication'
+      required:
+      - deadlines
+      - follow_ups
+      - funnel
+      - gone_quiet
+      - stats
+      - today
+      - weekly
+    DashboardStats:
+      type: object
+      properties:
+        active_applications:
+          type: integer
+          description: Applied, Screen / OA, Interview or Offer
+        applied_this_week:
+          type: integer
+        weekly_goal:
+          type: integer
+        applied_total:
+          type: integer
+        reached_interview:
+          type: integer
+        reached_interview_percent:
+          type: integer
+        average_match:
+          type: integer
+          nullable: true
+        scored_applications:
+          type: integer
+      required:
+      - active_applications
+      - applied_this_week
+      - applied_total
+      - average_match
+      - reached_interview
+      - reached_interview_percent
+      - scored_applications
+      - weekly_goal
+    Deadline:
+      type: object
+      properties:
+        id:
+          type: integer
+        role_title:
+          type: string
+        company_name:
+          type: string
+        deadline:
+          type: string
+          format: date
+        days_until:
+          type: integer
+        match_score:
+          type: integer
+          nullable: true
+      required:
+      - company_name
+      - days_until
+      - deadline
+      - id
+      - match_score
+      - role_title
+    Detail:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    FollowUp:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Interaction id; PATCH /api/interactions/{id}/ to mark done
+            or snooze
+        contact_id:
+          type: integer
+        contact_name:
+          type: string
+        company_name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        notes:
+          type: string
+        follow_up_date:
+          type: string
+          format: date
+        days_until:
+          type: integer
+          description: Negative when overdue
+      required:
+      - company_name
+      - contact_id
+      - contact_name
+      - days_until
+      - follow_up_date
+      - id
+      - kind
+      - notes
+    FunnelStage:
+      type: object
+      properties:
+        label:
+          type: string
+        count:
+          type: integer
+        percent:
+          type: integer
+      required:
+      - count
+      - label
+      - percent
+    Interaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        contact:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        kind_display:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+        follow_up_date:
+          type: string
+          format: date
+          nullable: true
+        follow_up_done:
+          type: boolean
+      required:
+      - contact
+      - date
+      - id
+      - kind_display
+    KindEnum:
+      enum:
+      - coffee_chat
+      - email
+      - referral
+      - other
+      type: string
+      description: |-
+        * `coffee_chat` - Coffee chat
+        * `email` - Email
+        * `referral` - Referral
+        * `other` - Other
+    Login:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+      - password
+      - username
+    MatchRequest:
+      type: object
+      properties:
+        job_description:
+          type: string
+        resume_id:
+          type: integer
+          description: Score against this resume only. Leave out to score against
+            every resume.
+      required:
+      - job_description
+    MatchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+      required:
+      - results
+    MatchResult:
+      type: object
+      properties:
+        resume_id:
+          type: integer
+        resume_name:
+          type: string
+        is_active:
+          type: boolean
+        score:
+          type: integer
+          nullable: true
+          description: 0-100, or null if the posting names no known skills
+        matched:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+      required:
+      - is_active
+      - matched
+      - missing
+      - resume_id
+      - resume_name
+      - score
+    Move:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Ids of the cards in the target column, top to bottom, after
+            the drop.
+      required:
+      - ids
+      - status
+    NullEnum:
+      enum:
+      - null
+    PatchedApplicationDetail:
+      type: object
+      description: Used for the board list. Leaves out the job description, which
+        can be long, to keep it small.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role_title:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+        job_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        status_display:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        term:
+          type: string
+          description: e.g. Summer 2027
+          maxLength: 50
+        coop_months:
+          nullable: true
+          minimum: 0
+          maximum: 32767
+          oneOf:
+          - $ref: '#/components/schemas/CoopMonthsEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        date_applied:
+          type: string
+          format: date
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: 0-100, from resume match
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        job_description:
+          type: string
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusChange'
+          readOnly: true
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactBrief'
+          readOnly: true
+    PatchedContactDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        company:
+          allOf:
+          - $ref: '#/components/schemas/CompanyBrief'
+          readOnly: true
+        company_name:
+          type: string
+          writeOnly: true
+          maxLength: 200
+        role:
+          type: string
+          maxLength: 200
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        linkedin_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        notes:
+          type: string
+        applications:
+          type: array
+          items:
+            type: integer
+        interaction_count:
+          type: integer
+          readOnly: true
+          default: 0
+        last_contacted:
+          type: string
+          format: date
+          readOnly: true
+        next_follow_up:
+          type: string
+          format: date
+          readOnly: true
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+          readOnly: true
+    PatchedInteraction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        contact:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        kind_display:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+        follow_up_date:
+          type: string
+          format: date
+          nullable: true
+        follow_up_done:
+          type: boolean
+    PatchedResume:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        text:
+          type: string
+          description: Plain text of the resume, used for keyword matching
+        is_active:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    QuietApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+        role_title:
+          type: string
+        company_name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        date_applied:
+          type: string
+          format: date
+          nullable: true
+        days_quiet:
+          type: integer
+      required:
+      - company_name
+      - date_applied
+      - days_quiet
+      - id
+      - role_title
+      - status
+    Resume:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        text:
+          type: string
+          description: Plain text of the resume, used for keyword matching
+        is_active:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - is_active
+      - name
+      - text
+    StatusChange:
+      type: object
+      properties:
+        from_status:
+          type: string
+          maxLength: 20
+        to_status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        changed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - changed_at
+      - to_status
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+      required:
+      - id
+      - username
+    Week:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+          description: Monday
+        count:
+          type: integer
+      required:
+      - count
+      - week_start
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('tracker.api.urls')),  # JSON API for the Next.js frontend
     path('accounts/', include('django.contrib.auth.urls')),  # login, logout, password change
-    path('', include('tracker.urls')),
+    # The original Django-template pages, kept until the Next.js frontend replaces them (docs/FRONTEND-PLAN.md).
+    path('classic/', include('tracker.urls')),
 ]

@@ -1,0 +1,9 @@
+# Keeps the Django image small and free of secrets: .env is passed in at runtime by Compose, never baked in.
+.env
+.git
+.venv
+**/__pycache__
+.ruff_cache
+staticfiles
+frontend
+docs

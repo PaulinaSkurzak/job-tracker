@@ -1,0 +1,13 @@
+# Development override: runs the Next.js dev server with live reload instead of the production build.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  frontend:
+    build: !reset null
+    image: node:24-alpine
+    user: node
+    working_dir: /app
+    command: npm run dev -- --hostname 0.0.0.0 --port 3000
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - ./frontend:/app

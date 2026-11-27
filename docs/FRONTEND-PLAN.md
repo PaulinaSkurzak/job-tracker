@@ -75,7 +75,12 @@ Each step is one commit (or a few), with tests, and leaves the app working.
 8. **Resume match and forms**: live match page, resumes page, new and edit application form.
 9. **Cleanup and CI**: remove the old template views and templates (keep Django admin), add a frontend CI job (lint, type check, Vitest tests, production build), bump GitHub Actions versions, update README with the new diagram and screenshots.
 
-Old pages keep working until step 9, so the app is never broken mid-way.
+Old pages keep working until step 9, so the app is never broken mid-way. Since step 4 they live at
+`/classic/` (Next.js owns `/`), and nginx sends `/api/`, `/admin/`, `/accounts/` and `/classic/` to Django.
+
+Change from the original order: the frontend CI job (lint, type check, tests, build, and checks that the
+committed API schema and generated types are current) was added in step 4 rather than step 9, so every
+later step is checked.
 
 ## Testing
 

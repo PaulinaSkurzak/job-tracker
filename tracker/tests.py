@@ -56,7 +56,7 @@ class ResumeTests(TestCase):
 class LoginTests(TestCase):
     def test_board_requires_login(self):
         response = self.client.get(reverse("board"))
-        self.assertRedirects(response, "/accounts/login/?next=/")
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('board')}")
 
     def test_move_requires_login(self):
         app = make_application()
