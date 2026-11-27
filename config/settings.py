@@ -137,6 +137,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Target number of applications per week, shown on the dashboard chart and stat tile.
+WEEKLY_APPLICATION_GOAL = int(os.environ.get("WEEKLY_APPLICATION_GOAL", "5"))
+
 # REST API (used by the Next.js frontend in frontend/).
 REST_FRAMEWORK = {
     # The frontend is served from the same origin as the API (nginx routes /api/ to Django),

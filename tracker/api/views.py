@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .. import matching, services
+from .. import dashboard, matching, services
 from ..models import Application, Company, Contact, Interaction, Resume
 from . import serializers as s
 
@@ -166,3 +166,11 @@ class MatchView(APIView):
                 }
             )
         return Response({"results": results})
+
+
+class DashboardView(APIView):
+    """Everything the dashboard shows, in one request."""
+
+    @extend_schema(responses=s.DashboardSerializer)
+    def get(self, request):
+        return Response(s.DashboardSerializer(dashboard.dashboard()).data)

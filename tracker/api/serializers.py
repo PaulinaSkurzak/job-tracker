@@ -173,3 +173,67 @@ class MatchResultSerializer(serializers.Serializer):
 
 class MatchResponseSerializer(serializers.Serializer):
     results = MatchResultSerializer(many=True)
+
+
+# ---- Dashboard (read-only; these describe the response so the frontend gets exact types) ----
+
+
+class DashboardStatsSerializer(serializers.Serializer):
+    active_applications = serializers.IntegerField(help_text="Applied, Screen / OA, Interview or Offer")
+    applied_this_week = serializers.IntegerField()
+    weekly_goal = serializers.IntegerField()
+    applied_total = serializers.IntegerField()
+    reached_interview = serializers.IntegerField()
+    reached_interview_percent = serializers.IntegerField()
+    average_match = serializers.IntegerField(allow_null=True)
+    scored_applications = serializers.IntegerField()
+
+
+class FunnelStageSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    count = serializers.IntegerField()
+    percent = serializers.IntegerField()
+
+
+class WeekSerializer(serializers.Serializer):
+    week_start = serializers.DateField(help_text="Monday")
+    count = serializers.IntegerField()
+
+
+class FollowUpSerializer(serializers.Serializer):
+    id = serializers.IntegerField(help_text="Interaction id; PATCH /api/interactions/{id}/ to mark done or snooze")
+    contact_id = serializers.IntegerField()
+    contact_name = serializers.CharField()
+    company_name = serializers.CharField()
+    kind = serializers.ChoiceField(choices=Interaction.Kind.choices)
+    notes = serializers.CharField()
+    follow_up_date = serializers.DateField()
+    days_until = serializers.IntegerField(help_text="Negative when overdue")
+
+
+class DeadlineSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    role_title = serializers.CharField()
+    company_name = serializers.CharField()
+    deadline = serializers.DateField()
+    days_until = serializers.IntegerField()
+    match_score = serializers.IntegerField(allow_null=True)
+
+
+class QuietApplicationSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    role_title = serializers.CharField()
+    company_name = serializers.CharField()
+    status = serializers.ChoiceField(choices=Application.Status.choices)
+    date_applied = serializers.DateField(allow_null=True)
+    days_quiet = serializers.IntegerField()
+
+
+class DashboardSerializer(serializers.Serializer):
+    today = serializers.DateField()
+    stats = DashboardStatsSerializer()
+    funnel = FunnelStageSerializer(many=True)
+    weekly = WeekSerializer(many=True)
+    follow_ups = FollowUpSerializer(many=True)
+    deadlines = DeadlineSerializer(many=True)
+    gone_quiet = QuietApplicationSerializer(many=True)

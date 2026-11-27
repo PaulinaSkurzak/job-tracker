@@ -21,6 +21,7 @@ urlpatterns = [
     path("auth/logout/", auth.LogoutView.as_view(), name="api_logout"),
     path("auth/me/", auth.MeView.as_view(), name="api_me"),
     path("match/", views.MatchView.as_view(), name="api_match"),
+    path("dashboard/", views.DashboardView.as_view(), name="api_dashboard"),
     # OpenAPI schema (the frontend's TypeScript types are generated from it) and a browsable docs page.
     path("schema/", SpectacularAPIView.as_view(), name="api_schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="api_schema"), name="api_docs"),

@@ -12,10 +12,9 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from . import matching, services
+from .dashboard import REMINDER_WINDOW_DAYS
 from .forms import ApplicationForm, ContactForm, InteractionForm, ResumeForm
 from .models import Application, Contact, Interaction, Resume
-
-REMINDER_WINDOW_DAYS = 14
 
 
 @login_required
