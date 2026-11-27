@@ -1,10 +1,11 @@
 "use client";
 
-import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, PlusIcon, SunIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
 
+import { useApplicationDialog } from "@/components/applications/application-dialog-context";
 import {
   CommandDialog,
   CommandEmpty,
@@ -19,6 +20,7 @@ import { NAV_ITEMS } from "@/lib/nav";
 export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const { setTheme } = useTheme();
+  const { openNew } = useApplicationDialog();
 
   // ⌘K on Mac, Ctrl+K elsewhere, from anywhere in the app.
   useEffect(() => {
@@ -42,6 +44,11 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
       <CommandInput placeholder="Type a page or command…" />
       <CommandList>
         <CommandEmpty>No results.</CommandEmpty>
+        <CommandGroup heading="Actions">
+          <CommandItem onSelect={() => run(openNew)}>
+            <PlusIcon /> New application
+          </CommandItem>
+        </CommandGroup>
         <CommandGroup heading="Go to">
           {NAV_ITEMS.map((item) => (
             <CommandItem key={item.href} onSelect={() => run(() => router.push(item.href))}>

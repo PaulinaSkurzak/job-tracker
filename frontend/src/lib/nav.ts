@@ -1,4 +1,4 @@
-import { FileCheckIcon, KanbanIcon, LayoutDashboardIcon, UsersIcon, type LucideIcon } from "lucide-react";
+import { FileCheckIcon, FileTextIcon, KanbanIcon, LayoutDashboardIcon, UsersIcon, type LucideIcon } from "lucide-react";
 
 export type NavItem = { title: string; href: string; icon: LucideIcon };
 
@@ -8,6 +8,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Board", href: "/board", icon: KanbanIcon },
   { title: "Contacts", href: "/contacts", icon: UsersIcon },
   { title: "Resume match", href: "/match", icon: FileCheckIcon },
+  { title: "Resumes", href: "/resumes", icon: FileTextIcon },
 ];
 
 export function titleFor(pathname: string): string {

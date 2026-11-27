@@ -3,6 +3,7 @@
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
+import { useApplicationDialog } from "@/components/applications/application-dialog-context";
 import { ApplicationSheet } from "@/components/board/application-sheet";
 import { FollowUpsTable } from "@/components/dashboard/follow-ups-table";
 import { Funnel } from "@/components/dashboard/funnel";
@@ -18,6 +19,7 @@ import { useDashboard } from "@/lib/follow-ups";
 export function DashboardPage() {
   const { data, isPending, isError, refetch } = useDashboard();
   const [openId, setOpenId] = useState<number | null>(null);
+  const { openNew } = useApplicationDialog();
 
   if (isError) {
     return (
@@ -55,10 +57,8 @@ export function DashboardPage() {
             {todoLine(data.follow_ups)}
           </p>
         </div>
-        <Button asChild>
-          <a href="/classic/applications/new/">
-            <PlusIcon /> New application
-          </a>
+        <Button onClick={openNew}>
+          <PlusIcon /> New application
         </Button>
       </div>
 

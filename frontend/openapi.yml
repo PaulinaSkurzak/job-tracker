@@ -1406,8 +1406,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MatchResult'
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillSpan'
+          description: Where each skill appears in job_description, for highlighting
       required:
       - results
+      - spans
     MatchResult:
       type: object
       properties:
@@ -1688,6 +1694,21 @@ components:
       - is_active
       - name
       - text
+    SkillSpan:
+      type: object
+      properties:
+        start:
+          type: integer
+          description: Index into job_description
+        end:
+          type: integer
+          description: Exclusive
+        skill:
+          type: string
+      required:
+      - end
+      - skill
+      - start
     StatusChange:
       type: object
       properties:

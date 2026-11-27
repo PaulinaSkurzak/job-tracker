@@ -172,8 +172,15 @@ class MatchResultSerializer(serializers.Serializer):
     missing = serializers.ListField(child=serializers.CharField())
 
 
+class SkillSpanSerializer(serializers.Serializer):
+    start = serializers.IntegerField(help_text="Index into job_description")
+    end = serializers.IntegerField(help_text="Exclusive")
+    skill = serializers.CharField()
+
+
 class MatchResponseSerializer(serializers.Serializer):
     results = MatchResultSerializer(many=True)
+    spans = SkillSpanSerializer(many=True, help_text="Where each skill appears in job_description, for highlighting")
 
 
 # ---- Dashboard (read-only; these describe the response so the frontend gets exact types) ----

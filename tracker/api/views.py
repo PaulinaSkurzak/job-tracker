@@ -165,7 +165,8 @@ class MatchView(APIView):
                     "missing": result.missing,
                 }
             )
-        return Response({"results": results})
+        spans = [{"start": x.start, "end": x.end, "skill": x.skill} for x in matching.find_spans(description)]
+        return Response({"results": results, "spans": spans})
 
 
 class DashboardView(APIView):

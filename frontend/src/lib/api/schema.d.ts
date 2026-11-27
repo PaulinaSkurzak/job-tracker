@@ -495,6 +495,8 @@ export interface components {
         };
         MatchResponse: {
             results: components["schemas"]["MatchResult"][];
+            /** @description Where each skill appears in job_description, for highlighting */
+            spans: components["schemas"]["SkillSpan"][];
         };
         MatchResult: {
             resume_id: number;
@@ -596,6 +598,13 @@ export interface components {
             readonly is_active: boolean;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        SkillSpan: {
+            /** @description Index into job_description */
+            start: number;
+            /** @description Exclusive */
+            end: number;
+            skill: string;
         };
         StatusChange: {
             from_status?: string;

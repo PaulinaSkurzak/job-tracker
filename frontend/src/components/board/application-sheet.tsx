@@ -1,11 +1,25 @@
 "use client";
 
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { useApplicationDialog } from "@/components/applications/application-dialog-context";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useApplication } from "@/lib/applications";
+import { useApplication, useDeleteApplication } from "@/lib/applications";
 import { STATUS_LABELS, type Status } from "@/lib/board";
 import { formatDateTime, formatDay } from "@/lib/dates";
 
@@ -21,6 +35,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /** Side panel with one application's details and status history. Opens when a card is clicked. */
 export function ApplicationSheet({ id, onClose }: { id: number | null; onClose: () => void }) {
   const { data: application, isPending, isError } = useApplication(id);
+  const { openEdit } = useApplicationDialog();
+  const remove = useDeleteApplication();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && onClose()}>
@@ -108,15 +125,44 @@ export function ApplicationSheet({ id, onClose }: { id: number | null; onClose: 
                     </a>
                   </Button>
                 )}
-                {/* The edit form comes in step 8; until then the classic page handles editing. */}
-                <Button variant="outline" asChild>
-                  <a href={`/classic/applications/${application.id}/edit/`}>Edit</a>
+                <Button variant="outline" onClick={() => openEdit(application.id)}>
+                  <PencilIcon /> Edit
+                </Button>
+                <Button variant="outline" onClick={() => setConfirmDelete(true)} aria-label={`Delete ${application.role_title}`}>
+                  <Trash2Icon />
                 </Button>
               </div>
             </div>
           </>
         )}
       </SheetContent>
+      {application && (
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {application.role_title} at {application.company.name}?</AlertDialogTitle>
+              <AlertDialogDescription>Its status history goes too. This can&apos;t be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-white hover:bg-destructive/90"
+                onClick={() =>
+                  remove.mutate(application.id, {
+                    onSuccess: () => {
+                      toast.success(`Deleted ${application.role_title}`);
+                      onClose();
+                    },
+                    onError: () => toast.error("Could not delete the application. Try again."),
+                  })
+                }
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Sheet>
   );
 }

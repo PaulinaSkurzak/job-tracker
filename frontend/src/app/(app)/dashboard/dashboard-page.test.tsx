@@ -1,11 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Dashboard } from "@/lib/dashboard";
 import { fakeApi, json } from "@/test/fake-api";
+import { renderWithProviders } from "@/test/render";
 
 import { DashboardPage } from "./dashboard-page";
 
@@ -62,12 +62,7 @@ function statefulServer() {
 }
 
 function renderPage() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  render(
-    <QueryClientProvider client={queryClient}>
-      <DashboardPage />
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<DashboardPage />);
 }
 
 describe("DashboardPage", () => {

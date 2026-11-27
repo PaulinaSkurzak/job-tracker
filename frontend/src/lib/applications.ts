@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import { api, errorMessage, unwrap } from "@/lib/api/client";
+import { api, errorMessage, unwrap, type Schemas } from "@/lib/api/client";
 import { applyMove, STATUS_LABELS, type Application, type Status } from "@/lib/board";
 
 export const APPLICATIONS_KEY = ["applications"] as const;
@@ -84,4 +84,65 @@ export function useMoveApplication() {
   );
 
   return { moveCard, isPending: mutation.isPending };
+}
+
+// ---- Create, edit, delete ---------------------------------------------------------------------
+
+export type ApplicationInput = Partial<
+  Pick<
+    Schemas["ApplicationDetail"],
+    | "company_name"
+    | "role_title"
+    | "location"
+    | "job_url"
+    | "status"
+    | "term"
+    | "coop_months"
+    | "date_applied"
+    | "deadline"
+    | "job_description"
+  >
+>;
+
+export function useCompanies() {
+  return useQuery({ queryKey: ["companies"], queryFn: async () => unwrap(await api.GET("/api/companies/")) });
+}
+
+/** Saving an application can change its score, status history and company, so refresh what shows them. */
+function useRefreshApplications() {
+  const queryClient = useQueryClient();
+  return (id?: number) => {
+    for (const key of [APPLICATIONS_KEY, ["dashboard"], ["companies"], ["contacts"]]) {
+      void queryClient.invalidateQueries({ queryKey: key });
+    }
+    if (id !== undefined) void queryClient.invalidateQueries({ queryKey: applicationKey(id) });
+  };
+}
+
+export function useSaveApplication(id?: number) {
+  const refresh = useRefreshApplications();
+  return useMutation({
+    mutationFn: async (body: ApplicationInput) =>
+      id === undefined
+        ? unwrap(await api.POST("/api/applications/", { body: body as Schemas["ApplicationDetail"] }))
+        : unwrap(
+            await api.PATCH("/api/applications/{id}/", {
+              params: { path: { id } },
+              body: body as Schemas["PatchedApplicationDetail"],
+            }),
+          ),
+    onSuccess: (saved) => refresh(saved.id),
+  });
+}
+
+export function useDeleteApplication() {
+  const queryClient = useQueryClient();
+  const refresh = useRefreshApplications();
+  return useMutation({
+    mutationFn: async (id: number) => unwrap(await api.DELETE("/api/applications/{id}/", { params: { path: { id } } })),
+    onSuccess: (_data, id) => {
+      queryClient.removeQueries({ queryKey: applicationKey(id) });
+      refresh();
+    },
+  });
 }

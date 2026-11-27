@@ -3,6 +3,7 @@
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 
+import { useApplicationDialog } from "@/components/applications/application-dialog-context";
 import { Board } from "@/components/board/board";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { STATUSES } from "@/lib/board";
 
 export function BoardPage() {
   const { data, isPending, isError, refetch } = useApplications();
+  const { openNew } = useApplicationDialog();
   const [query, setQuery] = useState("");
   // Typing stays responsive even with many cards: filtering re-renders at a lower priority.
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
@@ -42,11 +44,8 @@ export function BoardPage() {
               className="h-9 w-56 pl-8"
             />
           </div>
-          {/* The new-application form comes in step 8; until then the classic page handles it. */}
-          <Button asChild>
-            <a href="/classic/applications/new/">
-              <PlusIcon /> New application
-            </a>
+          <Button onClick={openNew}>
+            <PlusIcon /> New application
           </Button>
         </div>
       </div>
@@ -68,6 +67,9 @@ export function BoardPage() {
         <div className="rounded-xl border border-dashed p-10 text-center">
           <p className="font-medium">No applications yet</p>
           <p className="text-sm text-muted-foreground">Add the first role you are interested in to start your board.</p>
+          <Button className="mt-4" onClick={openNew}>
+            <PlusIcon /> New application
+          </Button>
         </div>
       ) : (
         <Board applications={visible} filtered={Boolean(deferredQuery)} />

@@ -327,7 +327,12 @@ class MatchApiTests(ApiTestCase):
         self.assertEqual(self.match(job_description="  ").status_code, 400)
 
     def test_no_resumes_gives_no_results(self):
-        self.assertEqual(self.match(job_description=self.JD).json(), {"results": []})
+        self.assertEqual(self.match(job_description=self.JD).json()["results"], [])
+
+    def test_returns_where_each_skill_appears(self):
+        spans = self.match(job_description=self.JD).json()["spans"]
+        self.assertEqual([(self.JD[s["start"]:s["end"]], s["skill"]) for s in spans],
+                         [("Python", "Python"), ("SQL", "SQL"), ("Spark", "Spark")])
 
     def test_matching_saves_nothing(self):
         a = app(job_description=self.JD)

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { ApplicationDialogProvider } from "@/components/applications/application-dialog-context";
 import { CommandMenu } from "@/components/command-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
@@ -43,6 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
+    <ApplicationDialogProvider>
     <SidebarProvider>
       <AppSidebar user={me.data} onOpenCommand={() => setCommandOpen(true)} />
       <SidebarInset>
@@ -61,6 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </SidebarInset>
       <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
     </SidebarProvider>
+    </ApplicationDialogProvider>
   );
 }
 
