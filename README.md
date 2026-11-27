@@ -94,6 +94,14 @@ docker compose exec web python manage.py createsuperuser
 
 Open http://localhost:8080 and log in. Go to **Resumes** first and paste your resume as plain text.
 
+To try the app with made-up data (14 applications, 6 contacts and a sample resume, with dates relative to
+today), load the demo data. It only touches records it created, so it is safe to remove later:
+
+```bash
+docker compose exec web python manage.py seed_demo          # load
+docker compose exec web python manage.py seed_demo --clear  # remove the demo data and nothing else
+```
+
 ## Tests and CI
 
 ```bash
