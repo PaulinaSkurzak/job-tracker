@@ -65,7 +65,10 @@ export function useMoveApplication() {
     },
 
     // Either way, refetch so the board matches the server exactly (e.g. positions it normalised).
-    onSettled: () => queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEY }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] }); // funnel and counts depend on statuses
+    },
   });
 
   const { mutate } = mutation;
