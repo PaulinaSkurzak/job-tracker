@@ -76,3 +76,59 @@ def match(job_description: str, resume_text: str) -> MatchResult:
     missing = sorted(wanted - have, key=str.lower)
     score = round(100 * len(matched) / len(wanted)) if wanted else None
     return MatchResult(score=score, matched=matched, missing=missing)
+
+
+# ---- Where each skill appears (for highlighting the job description in the UI) -------------
+
+
+@dataclass(frozen=True)
+class Span:
+    start: int  # index into the original text
+    end: int  # exclusive
+    skill: str
+
+
+def _same_length_lower(text: str) -> str:
+    # str.lower() can change length for a few characters (e.g. "İ" becomes two), which would shift
+    # every index after it. Lowercase character by character and keep any that would grow.
+    return "".join(c.lower() if len(c.lower()) == 1 else c for c in text)
+
+
+def _build_span_patterns():
+    # Same rules as _build_patterns, but matched against text of the original length: instead of
+    # collapsing whitespace first, a space inside a skill name matches any run of whitespace.
+    patterns = {}
+    for skill, pattern in _PATTERNS.items():
+        if skill in CASE_SENSITIVE:
+            patterns[skill] = pattern
+        else:
+            patterns[skill] = re.compile(pattern.pattern.replace(r"\ ", r"\s+"))
+    return patterns
+
+
+_SPAN_PATTERNS = _build_span_patterns()
+
+
+def find_spans(text: str, merge_overlaps: bool = True) -> list[Span]:
+    """Every place a vocabulary skill appears in text, in order.
+
+    With merge_overlaps, a span inside a longer one is dropped ("API" inside "REST API"), so the
+    UI can highlight without nesting. Without it, the set of skills equals extract_skills(text).
+    """
+    if not text:
+        return []
+    lowered = re.sub(r"[-_]", " ", _same_length_lower(text))  # same length as text
+    spans = []
+    for skill, pattern in _SPAN_PATTERNS.items():
+        haystack = text if skill in CASE_SENSITIVE else lowered
+        spans.extend(Span(m.start(), m.end(), skill) for m in pattern.finditer(haystack))
+    # Earliest first; at the same start, longest first.
+    spans.sort(key=lambda s: (s.start, -(s.end - s.start)))
+    if not merge_overlaps:
+        return spans
+    merged = []
+    for span in spans:
+        if merged and span.start < merged[-1].end:
+            continue  # overlaps the previous (longer or earlier) span
+        merged.append(span)
+    return merged

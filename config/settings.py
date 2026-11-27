@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'drf_spectacular',
     'tracker',
 ]
 
@@ -121,10 +123,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'board'
-LOGOUT_REDIRECT_URL = 'login'
-
 STATIC_URL = 'static/'
 # collectstatic gathers every app's static files here; nginx serves this folder.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -133,3 +131,30 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Target number of applications per week, shown on the dashboard chart and stat tile.
+WEEKLY_APPLICATION_GOAL = int(os.environ.get("WEEKLY_APPLICATION_GOAL", "5"))
+
+# REST API (used by the Next.js frontend in frontend/).
+REST_FRAMEWORK = {
+    # The frontend is served from the same origin as the API (nginx routes /api/ to Django),
+    # so Django's normal session cookie authenticates API calls. SessionAuthentication also
+    # enforces CSRF on every write from a logged-in user.
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    # Secure by default: every endpoint needs a logged-in user unless it explicitly opts out.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Job Tracker API",
+    "DESCRIPTION": "JSON API behind the Job Tracker frontend.",
+    "VERSION": "1.0.0",
+    # The schema describes every endpoint, so it is behind login too.
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    "SERVE_INCLUDE_SCHEMA": False,
+    # Application.status and StatusChange.to_status share one set of choices; give it a single clear
+    # name, which becomes the ApplicationStatus type in the frontend.
+    "ENUM_NAME_OVERRIDES": {"ApplicationStatus": "tracker.models.Application.Status"},
+}

@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 
 from . import matching
+from .matching import extract_skills, find_spans
 from .skills import ALIASES, SKILLS
 
 
@@ -97,3 +98,33 @@ class MatchTests(SimpleTestCase):
 
     def test_score_rounds_to_a_whole_number(self):
         self.assertEqual(matching.match("Python, SQL, Docker", "Python").score, 33)
+
+
+class FindSpansTests(SimpleTestCase):
+    def spans(self, text):
+        return [(text[s.start:s.end], s.skill) for s in find_spans(text)]
+
+    def test_positions_point_into_the_original_text(self):
+        self.assertEqual(self.spans("Uses  Python and sklearn."), [("Python", "Python"), ("sklearn", "scikit-learn")])
+
+    def test_multi_word_skill_across_a_line_break_and_hyphens(self):
+        self.assertEqual(self.spans("machine\nlearning, scikit-learn"),
+                         [("machine\nlearning", "machine learning"), ("scikit-learn", "scikit-learn")])
+
+    def test_same_word_boundary_and_case_rules_as_the_matcher(self):
+        expected = [("MySQL", "MySQL"), ("GitHub", "GitHub"), ("Spark", "Spark")]
+        self.assertEqual(self.spans("MySQL, GitHub, R&D, spark, Spark"), expected)
+
+    def test_a_skill_inside_a_longer_one_is_merged_away(self):
+        self.assertEqual(self.spans("Build a REST API."), [("REST API", "REST API")])
+
+    def test_finds_exactly_the_skills_extract_skills_finds(self):
+        # Every vocabulary skill and alias, in several spellings, must agree between the two code paths.
+        samples = [" ".join(SKILLS), " ".join(ALIASES), " ".join(SKILLS).upper(), " ".join(SKILLS).replace(" ", "\n  ")]
+        for text in samples:
+            with self.subTest(text=text[:40]):
+                self.assertEqual({s.skill for s in find_spans(text, merge_overlaps=False)}, extract_skills(text))
+
+    def test_characters_that_lengthen_when_lowercased_do_not_shift_positions(self):
+        text = "İstanbul team uses Python"
+        self.assertEqual(self.spans(text), [("Python", "Python")])
