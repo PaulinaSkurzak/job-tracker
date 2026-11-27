@@ -91,3 +91,16 @@ later step is checked.
 ## Out of scope
 
 Deployment to the internet, multi-user accounts, mobile drag and drop polish, PDF resume upload.
+
+## Outcome
+
+All nine steps are done (pull request #1). Changes from the plan along the way:
+
+- The move endpoint takes `{status, ids}` (the whole target column's order) instead of `{status, position}`.
+- The frontend CI job arrived in step 4 rather than step 9, so every later step was checked.
+- `POST /api/match/` also returns where each skill appears (`spans`), so highlighting uses the matcher's own rules.
+- The classic pages lived at `/classic/` from step 4 and were removed in step 9, with the 43 tests that only covered them.
+  Three rules tested only there moved into service tests.
+- A real-browser check (Playwright) before release found three bugs that jsdom tests could not: Enter opened and
+  immediately closed the detail panel, keyboard dragging could not reach other columns, and the drag preview's
+  rotation confused keyboard movement. It also found the board stretching the page sideways (a missing `min-w-0`).

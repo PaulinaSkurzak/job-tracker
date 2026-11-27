@@ -5,6 +5,7 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   useSensor,
   useSensors,
@@ -118,6 +119,9 @@ export function Board({ applications, filtered }: { applications: Application[];
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
+        // Keep measuring every column during a drag. Keyboard dragging needs to know where the other columns
+        // are to move into them; by default only the starting column is measured, so arrow keys went nowhere.
+        measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}

@@ -47,7 +47,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ApplicationDialogProvider>
     <SidebarProvider>
       <AppSidebar user={me.data} onOpenCommand={() => setCommandOpen(true)} />
-      <SidebarInset>
+      {/* min-w-0: a flex child won't shrink below its content's width without it, so the wide board
+          stretched the whole page sideways instead of scrolling inside its own box. */}
+      <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
@@ -59,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
           </div>
         </header>
-        <div className="flex-1 p-4 md:p-6">{children}</div>
+        <div className="min-w-0 flex-1 p-4 md:p-6">{children}</div>
       </SidebarInset>
       <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
     </SidebarProvider>

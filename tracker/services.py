@@ -8,7 +8,7 @@ from .models import Application, Company, Resume, StatusChange
 
 
 def company_named(name):
-    """Find the company with this name, or create it. Lets forms and the API take a plain name."""
+    """Find the company with this name, or create it. Lets the API take a plain name."""
     return Company.objects.get_or_create(name=name.strip())[0]
 
 

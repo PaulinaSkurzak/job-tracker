@@ -1,7 +1,7 @@
 """Serializers: convert models to and from JSON, and validate what the frontend sends.
 
-Business rules (scoring, history, company lookup) live in services.py and models.py, so the
-old Django pages and this API behave the same way.
+Business rules (scoring, history, company lookup) live in services.py and models.py, so they hold
+for anything that changes data: this API, the Django admin, or a management command.
 """
 
 from rest_framework import serializers
@@ -38,7 +38,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     """Used for the board list. Leaves out the job description, which can be long, to keep it small."""
 
     company = CompanyBriefSerializer(read_only=True)
-    # The frontend sends a plain company name; we find or create the Company (same as the old form).
+    # The frontend sends a plain company name; we find or create the Company, so adding an application
+    # never requires creating a company first.
     company_name = serializers.CharField(write_only=True, max_length=200, required=False)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
@@ -62,7 +63,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         name = self.validated_data.pop("company_name", "").strip()
         if name:
             kwargs["company"] = services.company_named(name)
-        # Re-score whenever the application is saved, as the old form did. On a partial update the
+        # Re-score whenever the application is saved. On a partial update the
         # description may not be in the request, so fall back to the saved one.
         description = self.validated_data.get(
             "job_description", self.instance.job_description if self.instance else ""

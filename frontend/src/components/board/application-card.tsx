@@ -27,7 +27,9 @@ export function CardFace({ application, lifted = false }: { application: Applica
     <div
       className={cn(
         "rounded-lg border bg-card p-3 text-left text-sm shadow-xs transition-shadow",
-        lifted && "rotate-1 shadow-lg ring-2 ring-ring",
+        // No rotation: a rotated box sticks out to the left, and keyboard dragging then mistakes the cards
+        // below for "to the right", so ArrowRight moved down instead of to the next column.
+        lifted && "shadow-lg ring-2 ring-ring",
       )}
     >
       <div className="font-medium leading-snug">{application.role_title}</div>
@@ -73,8 +75,12 @@ export function SortableCard({
       onClick={() => onOpen(application.id)}
       // Space picks the card up for keyboard dragging (dnd-kit); Enter opens it instead.
       onKeyDown={(event) => {
-        if (event.key === "Enter") onOpen(application.id);
-        else listeners?.onKeyDown?.(event);
+        if (event.key === "Enter") {
+          // Without preventDefault, the same Enter press would then "click" whatever has focus next:
+          // the panel's close button, which shuts the panel the moment it opens. (Found in a real browser.)
+          event.preventDefault();
+          onOpen(application.id);
+        } else listeners?.onKeyDown?.(event);
       }}
     >
       <CardFace application={application} />
