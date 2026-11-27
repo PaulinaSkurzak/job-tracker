@@ -51,14 +51,21 @@ export function ApplicationFormDialog({ id, open, onOpenChange }: { id?: number;
   );
 }
 
-function ApplicationForm({
+/** Prefilled values for a new application, e.g. from the browser bookmarklet (see /capture). */
+export type ApplicationPrefill = Pick<ApplicationInput, "role_title" | "job_url" | "job_description">;
+
+export function ApplicationForm({
   id,
   application,
+  initial,
   onDone,
+  onSaved,
 }: {
   id?: number;
   application?: ReturnType<typeof useApplication>["data"];
+  initial?: ApplicationPrefill;
   onDone: () => void;
+  onSaved?: (saved: { id: number; role_title: string; match_score: number | null }) => void;
 }) {
   const save = useSaveApplication(id);
   const { data: companies } = useCompanies();
@@ -90,6 +97,7 @@ function ApplicationForm({
         `${id === undefined ? "Added" : "Saved"} ${saved.role_title}` +
           (saved.match_score === null ? "" : ` · ${saved.match_score}% resume match`),
       );
+      onSaved?.(saved);
       onDone();
     } catch (error) {
       setErrors(fieldErrors(error));
@@ -111,7 +119,7 @@ function ApplicationForm({
           )}
         </Field>
         <Field id="role_title" label="Role" error={errors.role_title}>
-          {(props) => <Input {...props} name="role_title" defaultValue={application?.role_title} placeholder="e.g. Data Science Co-op" required />}
+          {(props) => <Input {...props} name="role_title" defaultValue={application?.role_title ?? initial?.role_title} placeholder="e.g. Data Science Co-op" required />}
         </Field>
       </div>
 
@@ -166,12 +174,12 @@ function ApplicationForm({
           {(props) => <Input {...props} name="location" defaultValue={application?.location} placeholder="e.g. Boston, MA" />}
         </Field>
         <Field id="job_url" label="Job posting URL" error={errors.job_url}>
-          {(props) => <Input {...props} name="job_url" type="url" defaultValue={application?.job_url} />}
+          {(props) => <Input {...props} name="job_url" type="url" defaultValue={application?.job_url ?? initial?.job_url} />}
         </Field>
       </div>
 
       <Field id="job_description" label="Job description" error={errors.job_description} hint="Used for the resume match score.">
-        {(props) => <Textarea {...props} name="job_description" defaultValue={application?.job_description} rows={8} />}
+        {(props) => <Textarea {...props} name="job_description" defaultValue={application?.job_description ?? initial?.job_description} rows={8} />}
       </Field>
 
       {errors.form && (

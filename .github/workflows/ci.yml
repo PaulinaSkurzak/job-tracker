@@ -42,6 +42,13 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Fail if personal data or secrets are committed
+        # Database backups hold real data (including password hashes) and .env holds secrets.
+        run: |
+          if git ls-files | grep -E '(^|/)backups/|\.dump$|\.sql$|(^|/)\.env$'; then
+            echo "These files must never be committed (see .gitignore)." && exit 1
+          fi
+
       - name: Install dependencies
         run: pip install -r requirements.txt ruff
 

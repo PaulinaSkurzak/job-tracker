@@ -18,6 +18,7 @@ Co-op applications open in a short window and quickly turn into dozens of roles.
 - **Dashboard:** stat tiles, applications per week against a weekly goal, a pipeline funnel built from status history, follow-ups with **Done** and **Snooze**, saved roles closing soon, and applications that have **gone quiet** (no status change for 14+ days).
 - **Contacts:** a sortable, filterable table; each contact has a timeline of interactions with follow-up dates.
 - **Resume match:** paste a posting and the score updates as you type. Skills are highlighted in the text (green if your resume has them, orange if not), and every resume version is compared side by side.
+- **Save postings from any site:** a "Save to Job Tracker" bookmarklet (set it up at `/capture`). Select the job description on a posting, click the bookmark, and a small window opens with the URL, role and description filled in and a live match score. Nothing is saved until you click Add.
 - **Dark and light themes**, following the operating system by default. **⌘K** opens a command menu.
 - **Private by design:** single user, and every API endpoint requires a logged-in session.
 
@@ -116,8 +117,8 @@ docker run --rm -u node -e HOME=/tmp -v "$PWD/frontend":/work -w /work node:24-a
 ```
 
 - **Backend, 124 tests:** status history, the funnel, the login flow and CSRF enforcement, a check that every API route requires login, drag-and-drop validation, scoring and rescoring, dashboard date logic pinned to a fixed date, skill spans, and the demo-data command.
-- **Frontend, 88 tests** (Vitest + Testing Library): optimistic moves and follow-up actions with rollback and Undo, safe post-login redirects, CSRF handling, sorting with empty values last, skill highlighting, form error display, and every page. Tests run in Boston's time zone so date logic meets daylight saving time.
-- **Checked in a real browser** (Playwright): mouse and keyboard drag-and-drop, Undo, and opening cards. This found three bugs that simulated-browser tests could not.
+- **Frontend, 103 tests** (Vitest + Testing Library): optimistic moves and follow-up actions with rollback and Undo, safe post-login redirects, CSRF handling, sorting with empty values last, skill highlighting, form error display, and every page. Tests run in Boston's time zone so date logic meets daylight saving time.
+- **Checked in a real browser** (Playwright): mouse and keyboard drag-and-drop, Undo and opening cards, and the bookmarklet on a page from another site. This found four bugs that simulated-browser tests could not.
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request, in three jobs:
 - **Backend:** lint, Django checks, missing migrations, API schema up to date, and the tests on PostgreSQL 16.
@@ -149,4 +150,4 @@ docs/FRONTEND-PLAN.md   design notes for the frontend rewrite
 - Built for local, single-user use. Before putting it on the internet it needs HTTPS, secure cookie settings, `DEBUG` off, and configurable allowed origins (they are fixed to `localhost:8080`).
 - Resume text is pasted in, with no PDF upload.
 - The board is designed for desktop widths. Drag-and-drop on touch screens has not been tested.
-- Ideas: email reminders for follow-ups, a browser extension to save postings, embedding-based matching, and adding the Playwright checks to CI.
+- Ideas: email reminders for follow-ups, embedding-based matching, and adding the Playwright checks to CI.

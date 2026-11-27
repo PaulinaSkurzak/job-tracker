@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, SearchIcon } from "lucide-react";
+import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 
 import { useApplicationDialog } from "@/components/applications/application-dialog-context";
@@ -29,7 +30,10 @@ export function BoardPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Board</h1>
           <p className="text-sm text-muted-foreground">
             {data ? `${data.length} application${data.length === 1 ? "" : "s"} · ` : ""}
-            {query ? "Clear the search to drag cards" : "Drag a card to change its status"}
+            {query ? "Clear the search to drag cards" : "Drag a card to change its status"} ·{" "}
+            <Link href="/capture" className="underline underline-offset-2 hover:text-foreground">
+              Save postings from your browser
+            </Link>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

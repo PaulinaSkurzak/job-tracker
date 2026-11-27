@@ -4,3 +4,6 @@ __pycache__/
 staticfiles/
 .venv/
 .DS_Store
+
+# Database backups contain personal data: never commit them
+backups/
