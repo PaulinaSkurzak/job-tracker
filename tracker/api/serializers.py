@@ -107,13 +107,14 @@ class InteractionSerializer(serializers.ModelSerializer):
 
 
 class ContactSerializer(serializers.ModelSerializer):
-    company = CompanyBriefSerializer(read_only=True)
+    company = CompanyBriefSerializer(read_only=True, allow_null=True)  # a contact's company is optional
     company_name = serializers.CharField(write_only=True, max_length=200, required=False, allow_blank=True)
     applications = serializers.PrimaryKeyRelatedField(many=True, queryset=Application.objects.all(), required=False)
     # Filled in by annotations on the queryset (one query for the whole list, see ContactViewSet).
     interaction_count = serializers.IntegerField(read_only=True, default=0)
-    last_contacted = serializers.DateField(read_only=True, default=None)
-    next_follow_up = serializers.DateField(read_only=True, default=None)
+    # allow_null so the schema (and the frontend's types) say these can be null: no interactions yet.
+    last_contacted = serializers.DateField(read_only=True, default=None, allow_null=True)
+    next_follow_up = serializers.DateField(read_only=True, default=None, allow_null=True)
 
     class Meta:
         model = Contact

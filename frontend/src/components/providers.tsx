@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ApiError } from "@/lib/api/client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Created once per browser tab (useState), so the cache survives re-renders.
@@ -13,7 +14,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30_000, refetchOnWindowFocus: true },
+          queries: {
+            staleTime: 30_000,
+            refetchOnWindowFocus: true,
+            // Retry network failures and server errors, but not 4xx: a 404 or 403 won't change on retry.
+            retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 2,
+          },
         },
       }),
   );

@@ -370,7 +370,7 @@ export interface components {
         Contact: {
             readonly id: number;
             name: string;
-            readonly company: components["schemas"]["CompanyBrief"];
+            readonly company: components["schemas"]["CompanyBrief"] | null;
             company_name?: string;
             role?: string;
             email?: string;
@@ -380,9 +380,9 @@ export interface components {
             /** @default 0 */
             readonly interaction_count: number;
             /** Format: date */
-            readonly last_contacted: string;
+            readonly last_contacted: string | null;
             /** Format: date */
-            readonly next_follow_up: string;
+            readonly next_follow_up: string | null;
         };
         ContactBrief: {
             readonly id: number;
@@ -391,7 +391,7 @@ export interface components {
         ContactDetail: {
             readonly id: number;
             name: string;
-            readonly company: components["schemas"]["CompanyBrief"];
+            readonly company: components["schemas"]["CompanyBrief"] | null;
             company_name?: string;
             role?: string;
             email?: string;
@@ -401,9 +401,9 @@ export interface components {
             /** @default 0 */
             readonly interaction_count: number;
             /** Format: date */
-            readonly last_contacted: string;
+            readonly last_contacted: string | null;
             /** Format: date */
-            readonly next_follow_up: string;
+            readonly next_follow_up: string | null;
             readonly interactions: components["schemas"]["Interaction"][];
         };
         /**
@@ -543,7 +543,7 @@ export interface components {
         PatchedContactDetail: {
             readonly id?: number;
             name?: string;
-            readonly company?: components["schemas"]["CompanyBrief"];
+            readonly company?: components["schemas"]["CompanyBrief"] | null;
             company_name?: string;
             role?: string;
             email?: string;
@@ -553,9 +553,9 @@ export interface components {
             /** @default 0 */
             readonly interaction_count: number;
             /** Format: date */
-            readonly last_contacted?: string;
+            readonly last_contacted?: string | null;
             /** Format: date */
-            readonly next_follow_up?: string;
+            readonly next_follow_up?: string | null;
             readonly interactions?: components["schemas"]["Interaction"][];
         };
         PatchedInteraction: {

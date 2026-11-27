@@ -1055,6 +1055,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyBrief'
           readOnly: true
+          nullable: true
         company_name:
           type: string
           writeOnly: true
@@ -1090,10 +1091,12 @@ components:
           type: string
           format: date
           readOnly: true
+          nullable: true
         next_follow_up:
           type: string
           format: date
           readOnly: true
+          nullable: true
       required:
       - company
       - id
@@ -1126,6 +1129,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyBrief'
           readOnly: true
+          nullable: true
         company_name:
           type: string
           writeOnly: true
@@ -1161,10 +1165,12 @@ components:
           type: string
           format: date
           readOnly: true
+          nullable: true
         next_follow_up:
           type: string
           format: date
           readOnly: true
+          nullable: true
         interactions:
           type: array
           items:
@@ -1542,6 +1548,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyBrief'
           readOnly: true
+          nullable: true
         company_name:
           type: string
           writeOnly: true
@@ -1577,10 +1584,12 @@ components:
           type: string
           format: date
           readOnly: true
+          nullable: true
         next_follow_up:
           type: string
           format: date
           readOnly: true
+          nullable: true
         interactions:
           type: array
           items:
