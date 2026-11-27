@@ -1,6 +1,6 @@
 "use client";
 
-import { MonitorIcon, MoonIcon, PlusIcon, SunIcon } from "lucide-react";
+import { BookmarkIcon, MonitorIcon, MoonIcon, PlusIcon, SunIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
@@ -47,6 +47,9 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
         <CommandGroup heading="Actions">
           <CommandItem onSelect={() => run(openNew)}>
             <PlusIcon /> New application
+          </CommandItem>
+          <CommandItem onSelect={() => run(() => router.push("/capture"))}>
+            <BookmarkIcon /> Save postings from your browser
           </CommandItem>
         </CommandGroup>
         <CommandGroup heading="Go to">
