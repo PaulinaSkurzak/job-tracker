@@ -62,9 +62,9 @@ export function BoardPage() {
           </button>
         </div>
       ) : isPending ? (
-        <div className="flex gap-3 overflow-hidden" aria-busy="true" aria-label="Loading board">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true" aria-label="Loading board">
           {STATUSES.map((status) => (
-            <Skeleton key={status} className="h-64 w-64 shrink-0 rounded-xl" />
+            <Skeleton key={status} className="h-64 rounded-xl" />
           ))}
         </div>
       ) : data.length === 0 ? (
