@@ -1,0 +1,6 @@
+# Production only (docker-compose.prod.yml). Caddy gets a free HTTPS certificate from Let's Encrypt for
+# $DOMAIN, renews it automatically, redirects http:// to https://, and passes requests on to nginx.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy nginx:80
+}

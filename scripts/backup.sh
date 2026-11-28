@@ -20,6 +20,14 @@ docker compose exec -T db pg_restore --list < "$file" > /dev/null
 
 echo "Saved $file ($(du -h "$file" | cut -f1))"
 
+# On the cloud server, also copy it off the machine, so losing the server does not lose the data.
+# The bucket name comes from the environment or from .env (read as text, not run as a script).
+bucket="${BACKUP_S3_BUCKET:-$(sed -n 's/^BACKUP_S3_BUCKET=//p' .env 2>/dev/null | tail -n 1)}"
+if [[ -n "$bucket" ]]; then
+  aws s3 cp "$file" "s3://$bucket/$(basename "$file")" --only-show-errors
+  echo "Copied to s3://$bucket/$(basename "$file")"
+fi
+
 # Keep only the newest $KEEP backups.
 ls -1t backups/jobtracker-*.dump | tail -n +$((KEEP + 1)) | while read -r old; do
   rm -- "$old"

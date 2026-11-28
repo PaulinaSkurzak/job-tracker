@@ -25,8 +25,21 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h]
 
-# Needed so form posts work through nginx on port 8080.
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080"]
+# Origins allowed to send logged-in writes (form posts, API calls). Locally that is nginx on port 8080;
+# in production set it to the real site, e.g. https://jobs.example.com.
+_csrf_origins = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
+CSRF_TRUSTED_ORIGINS = [o for o in _csrf_origins.split(",") if o]
+
+# Production runs behind HTTPS (Caddy -> nginx -> Django). Off locally, where there is no certificate.
+if os.environ.get("DJANGO_HTTPS", "0") == "1":
+    # Caddy talks to the browser over HTTPS but to nginx over plain HTTP inside Docker. It reports the
+    # original scheme in X-Forwarded-Proto; trust that header so Django knows the request was secure.
+    # Safe only because nginx is not reachable from the internet in production (see docker-compose.prod.yml).
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True  # never send the login cookie over plain HTTP
+    CSRF_COOKIE_SECURE = True
+    # HSTS: browsers remember to use HTTPS only for this site. Starts at one day; raise it once all is well.
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "86400"))
 
 
 # Application definition
@@ -145,6 +158,8 @@ REST_FRAMEWORK = {
     # Secure by default: every endpoint needs a logged-in user unless it explicitly opts out.
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Login attempts allowed in total (see LoginRateThrottle in tracker/api/auth.py).
+    "DEFAULT_THROTTLE_RATES": {"login": os.environ.get("LOGIN_RATE_LIMIT", "20/hour")},
 }
 
 SPECTACULAR_SETTINGS = {

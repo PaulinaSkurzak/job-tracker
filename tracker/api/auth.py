@@ -12,6 +12,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 
 
@@ -40,12 +41,27 @@ class CsrfView(APIView):
         return Response({"detail": "CSRF cookie set"})
 
 
+class LoginRateThrottle(SimpleRateThrottle):
+    """Caps login attempts across everyone, not per IP address.
+
+    This is a single-user app, so a shared cap is the strongest guard against password guessing: an
+    attacker cannot get around it by switching IP addresses. The cost is that a flood of bad attempts also
+    blocks the owner until the hour is up. The count lives in Django's cache (in memory, per process).
+    """
+
+    scope = "login"
+
+    def get_cache_key(self, request, view):
+        return "throttle_login"
+
+
 # DRF only enforces CSRF for users who are already logged in. Login itself is a request from a
 # logged-out user, so it needs csrf_protect explicitly; otherwise another site could log the
 # browser into an account of the attacker's choosing ("login CSRF").
 @method_decorator(csrf_protect, name="dispatch")
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     @extend_schema(request=LoginSerializer, responses={200: UserSerializer, 400: DetailSerializer})
     def post(self, request):
