@@ -33,7 +33,7 @@ export function BoardColumn({
   const { setNodeRef, isOver } = useDroppable({ id: columnId(status) });
 
   return (
-    <section aria-labelledby={`heading-${status}`} className="flex w-64 shrink-0 flex-col">
+    <section aria-labelledby={`heading-${status}`} className="flex min-w-0 flex-col">
       <h2 id={`heading-${status}`} className="mb-2 flex items-center gap-2 px-1 text-sm font-medium">
         <span aria-hidden="true" className={cn("size-2 rounded-full", STATUS_DOT[status])} />
         {STATUS_LABELS[status]}

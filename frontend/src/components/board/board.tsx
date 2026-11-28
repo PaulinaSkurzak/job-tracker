@@ -133,8 +133,10 @@ export function Board({ applications, filtered }: { applications: Application[];
           },
         }}
       >
-        <div className="overflow-x-auto pb-3">
-          <div className="flex min-w-max items-stretch gap-3">
+        {/* A grid instead of one long row: 4 columns on wide screens (Saved to Interview on top, outcomes
+            below), 2 on tablets, 1 on phones. Nothing scrolls sideways. */}
+        <div className="pb-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {STATUSES.map((status) => (
               <BoardColumn
                 key={status}
