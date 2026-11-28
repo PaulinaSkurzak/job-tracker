@@ -1,9 +1,13 @@
+from unittest import mock
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
 from .api import urls as api_urls
+from .api.auth import LoginRateThrottle
 
 PASSWORD = "a-strong-test-password"
 
@@ -17,6 +21,7 @@ def csrf_client():
 
 class AuthFlowTests(TestCase):
     def setUp(self):
+        cache.clear()  # the login throttle counts attempts in the cache; start every test at zero
         self.user = get_user_model().objects.create_user("paulina", password=PASSWORD)
 
     def test_csrf_endpoint_sets_cookie_when_logged_out(self):
@@ -50,6 +55,18 @@ class AuthFlowTests(TestCase):
             reverse("api_login"), {"username": "nobody", "password": "x"}, format="json", HTTP_X_CSRFTOKEN=token
         )
         self.assertEqual(response.json(), {"detail": "Invalid username or password."})
+
+    @mock.patch.object(LoginRateThrottle, "get_rate", return_value="2/hour")
+    def test_login_attempts_are_capped_even_with_the_right_password(self, _rate):
+        client, token = csrf_client()
+        wrong = {"username": "paulina", "password": "wrong"}
+        for _ in range(2):
+            client.post(reverse("api_login"), wrong, format="json", HTTP_X_CSRFTOKEN=token)
+        response = client.post(
+            reverse("api_login"), {"username": "paulina", "password": PASSWORD}, format="json", HTTP_X_CSRFTOKEN=token
+        )
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(client.get(reverse("api_me")).status_code, 403)  # still logged out
 
     def test_login_without_csrf_token_is_rejected(self):
         client, _ = csrf_client()

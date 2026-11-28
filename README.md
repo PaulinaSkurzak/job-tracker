@@ -41,7 +41,8 @@ flowchart LR
     gunicorn --> Postgres[(PostgreSQL 16)]
 ```
 
-Four containers: `db`, `web` (Django API), `frontend` (Next.js) and `nginx`.
+Four containers: `db`, `web` (Django API), `frontend` (Next.js) and `nginx`. In production a fifth, Caddy, sits in
+front of nginx and handles HTTPS (see [Deploying to AWS](#deploying-to-aws)).
 
 | Decision | Why |
 |---|---|
@@ -127,6 +128,13 @@ with `crontab -e` (use the full path to this folder):
 0 21 * * * cd /path/to/job-tracker && ./scripts/backup.sh >> backups/backup.log 2>&1
 ```
 
+## Deploying to AWS
+
+It runs on a single EC2 server with the same Compose stack, plus `docker-compose.prod.yml`. That file adds Caddy for
+automatic HTTPS, restarts containers after a reboot, and keeps nginx off the public internet. Nightly backups are
+copied to S3 using an IAM role that can only add files. Step-by-step instructions, costs and design choices:
+[docs/DEPLOY-AWS.md](docs/DEPLOY-AWS.md).
+
 ## Tests and CI
 
 ```bash
@@ -154,19 +162,22 @@ tracker/
   matching.py, skills.py  resume matcher and its vocabulary
   api/                  serializers, views, auth and URLs for the REST API
   management/commands/  seed_demo
-scripts/                backup.sh and restore.sh for the database
+scripts/                backup.sh (optionally copies to S3) and restore.sh for the database
 frontend/
   src/app/              pages: (app)/ for logged-in pages, login/
   src/components/       board, dashboard, contacts and application components; ui/ is shadcn/ui
   src/lib/              typed API client, data hooks, and plain-function logic with tests
   openapi.yml           API schema generated from Django
 nginx/default.conf      routes /api and /admin to Django, everything else to Next.js
+caddy/Caddyfile         production HTTPS in front of nginx
+docker-compose.prod.yml production override (Caddy, restart policies, no code mount)
+docs/DEPLOY-AWS.md      how to deploy to AWS EC2
 docs/FRONTEND-PLAN.md   design notes for the frontend rewrite
 ```
 
 ## Limitations and next steps
 
-- Built for local, single-user use. Before putting it on the internet it needs HTTPS, secure cookie settings, `DEBUG` off, and configurable allowed origins (they are fixed to `localhost:8080`).
+- Single-user. Login attempts are capped at 20 per hour in total, so a flood of bad attempts also locks out the owner until the hour is up.
 - Resume text is pasted in, with no PDF upload.
 - The board is designed for desktop widths. Drag-and-drop on touch screens has not been tested.
 - Ideas: email reminders for follow-ups, embedding-based matching, and adding the Playwright checks to CI.

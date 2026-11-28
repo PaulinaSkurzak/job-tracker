@@ -1,0 +1,40 @@
+# Production override for a cloud server (AWS EC2). Used on top of docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Setting COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml in the server's .env makes every plain
+# `docker compose ...` command (and scripts/backup.sh) use both files. See docs/DEPLOY-AWS.md.
+services:
+  db:
+    restart: unless-stopped                   # come back after a crash or a server reboot
+
+  web:
+    restart: unless-stopped
+    # Run the code baked into the image, not a live copy of the folder (that mount is for local editing).
+    volumes: !override
+      - staticfiles:/app/staticfiles
+
+  frontend:
+    restart: unless-stopped
+
+  nginx:
+    restart: unless-stopped
+    ports: !reset []                          # not reachable from the internet; only Caddy talks to it
+
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "80:80"                               # needed for the certificate check and the http -> https redirect
+      - "443:443"
+      - "443:443/udp"                         # HTTP/3
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env, e.g. DOMAIN=jobs.example.com}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data                      # the certificate; keeping it avoids Let's Encrypt rate limits
+      - caddy_config:/config
+    depends_on:
+      - nginx
+
+volumes:
+  caddy_data:
+  caddy_config:
